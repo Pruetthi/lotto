@@ -9,6 +9,7 @@ import 'package:lotto/model/request/UserResponse.dart';
 import 'package:lotto/model/request/lottery.dart';
 import 'package:lotto/pages/check.dart';
 import 'package:lotto/pages/create.dart';
+import 'package:lotto/pages/history.dart';
 import 'package:lotto/pages/login.dart';
 import 'package:lotto/pages/member.dart';
 import 'package:lotto/pages/reward.dart';
@@ -115,10 +116,18 @@ class _HomePageState extends State<HomePage> {
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          LotteryResultPage(currentUser: widget.currentUser),
+                          MemberPage(currentUser: widget.currentUser),
                     ),
                   );
                 } else if (value == 'orders') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          HistoryPage(currentUser: widget.currentUser),
+                    ),
+                  );
+                } else if (value == 'check') {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -138,15 +147,21 @@ class _HomePageState extends State<HomePage> {
                     MaterialPageRoute(builder: (context) => const LoginPage()),
                     (route) => false,
                   );
-                } else if (value == 'reward') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => Reward()),
-                  );
                 } else if (value == 'create') {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => CreatePage()),
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          CreatePage(currentUser: widget.currentUser),
+                    ),
+                  );
+                } else if (value == 'reward') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          Reward(currentUser: widget.currentUser),
+                    ),
                   );
                 }
               },
@@ -163,6 +178,10 @@ class _HomePageState extends State<HomePage> {
                   const PopupMenuItem<String>(
                     value: 'orders',
                     child: Text('คำสั่งซื้อ'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'check',
+                    child: Text('ผลรางวัล'),
                   ),
                 ];
 
@@ -307,6 +326,7 @@ class _HomePageState extends State<HomePage> {
                             MaterialPageRoute(
                               builder: (context) => SearchPage(
                                 status: widget.currentUser.status,
+                                currentUser: widget.currentUser,
                                 searchNumber: searchNumber,
                               ),
                             ),
@@ -399,7 +419,35 @@ class _HomePageState extends State<HomePage> {
                               ElevatedButton.icon(
                                 onPressed: lottery.status == 'still'
                                     ? () {
-                                        print('ซื้อเลข ${lottery.number}');
+                                        // แสดง Dialog ยืนยันก่อนซื้อ
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: const Text("ยืนยันการซื้อ"),
+                                            content: Text(
+                                              "คุณต้องการซื้อเลข ${lottery.number} ใช่หรือไม่?",
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(
+                                                  context,
+                                                ), // ปิด Dialog
+                                                child: const Text("ยกเลิก"),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.pop(
+                                                    context,
+                                                  ); // ปิด Dialog
+                                                  buyLotto(
+                                                    lottery.lid,
+                                                  ); // เรียกซื้อหวย
+                                                },
+                                                child: const Text("ตกลง"),
+                                              ),
+                                            ],
+                                          ),
+                                        );
                                       }
                                     : null,
                                 icon: const Icon(Icons.shopping_cart),
@@ -436,7 +484,23 @@ class _HomePageState extends State<HomePage> {
           setState(() {
             _selectedIndex = index;
           });
-
+          if (index == 0) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HomePage(currentUser: widget.currentUser),
+              ),
+            );
+          }
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    HistoryPage(currentUser: widget.currentUser),
+              ),
+            );
+          }
           if (index == 2) {
             Navigator.push(
               context,
@@ -476,6 +540,35 @@ class _HomePageState extends State<HomePage> {
       return data.map((json) => Lottery.fromJson(json)).toList();
     } else {
       throw Exception('Failed to load lotteries');
+    }
+  }
+
+  Future<void> buyLotto(int lid) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$API_ENDPOINT/buyLotto'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'lid': lid,
+          'uid': widget.currentUser.uid, // ใช้ uid ของผู้ใช้ปัจจุบัน
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("ซื้อหวยสำเร็จ")));
+        setState(() {}); // refresh UI
+      } else {
+        final msg = jsonDecode(response.body)['message'];
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("ซื้อหวยไม่สำเร็จ: $msg")));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("เกิดข้อผิดพลาด: $e")));
     }
   }
 }

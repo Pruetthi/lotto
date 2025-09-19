@@ -1,9 +1,7 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:lotto/config/internal_config.dart';
-import 'package:lotto/model/request/LotteryResult.dart';
 import 'package:lotto/model/request/UserResponse.dart';
+import 'package:intl/intl.dart';
+import 'package:lotto/pages/check.dart';
 import 'package:lotto/pages/create.dart';
 import 'package:lotto/pages/history.dart';
 import 'package:lotto/pages/home.dart';
@@ -11,53 +9,25 @@ import 'package:lotto/pages/login.dart';
 import 'package:lotto/pages/member.dart';
 import 'package:lotto/pages/reward.dart';
 
-class LotteryResultPage extends StatefulWidget {
+class ProfilePage extends StatefulWidget {
   final UserResponse currentUser;
-
-  const LotteryResultPage({super.key, required this.currentUser});
+  const ProfilePage({super.key, required this.currentUser});
 
   @override
-  State<LotteryResultPage> createState() => _LotteryResultPageState();
+  State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _LotteryResultPageState extends State<LotteryResultPage> {
+class _ProfilePageState extends State<ProfilePage> {
   int _selectedIndex = 0;
-
-  Future<List<LottoResult>> fetchLottoResult() async {
-    final response = await http.get(Uri.parse('$API_ENDPOINT/lottoResult'));
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body)['data'] as List;
-      return data.map((json) => LottoResult.fromJson(json)).toList();
-    } else {
-      throw Exception('ไม่สามารถโหลดผลรางวัลได้');
-    }
-  }
-
-  Map<int, List<String>> groupResults(List<LottoResult> results) {
-    Map<int, List<String>> grouped = {};
-    for (var r in results) {
-      grouped.putIfAbsent(r.rid, () => []);
-      grouped[r.rid]!.add(r.number); // number เป็น String อยู่แล้ว
-    }
-
-    // ✅ ถ้าไม่มีเลขท้าย 3 ตัว แต่มีรางวัลที่ 1 ให้ใช้เลขท้าย 3 ตัวของรางวัลที่ 1
-    if (!grouped.containsKey(4) || grouped[4]!.isEmpty) {
-      if (grouped.containsKey(1) && grouped[1]!.isNotEmpty) {
-        String prize1 = grouped[1]!.first;
-        String last3 = prize1.length >= 3
-            ? prize1.substring(prize1.length - 3)
-            : prize1;
-        grouped[4] = [last3]; // ใช้แค่เลข 3 ตัวท้ายของรางวัลที่ 1
-      }
-    }
-
-    return grouped;
-  }
-
   @override
   Widget build(BuildContext context) {
+    // ใช้ widget.currentUser แทน currentUser
+    String birthdayText = DateFormat(
+      'yyyy-MM-dd',
+    ).format(widget.currentUser.birthday);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[200],
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: const Color(0xFF9E090F),
@@ -208,67 +178,73 @@ class _LotteryResultPageState extends State<LotteryResultPage> {
           ],
         ),
       ),
-      body: FutureBuilder<List<LottoResult>>(
-        future: fetchLottoResult(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('เกิดข้อผิดพลาด: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('ยังไม่มีผลรางวัล'));
-          }
-
-          final grouped = groupResults(snapshot.data!);
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+      body: Column(
+        children: [
+          const SizedBox(height: 20),
+          // Avatar และชื่อ
+          Center(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Text(
-                  "ผลรางวัล",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Colors.black,
+                  backgroundImage: widget.currentUser.image.isNotEmpty
+                      ? NetworkImage(widget.currentUser.image)
+                      : null,
+                  child: widget.currentUser.image.isEmpty
+                      ? const Icon(Icons.person, color: Colors.white, size: 50)
+                      : null,
                 ),
-                const SizedBox(height: 20),
-                _buildPrizeCard(
-                  "รางวัลที่ 1",
-                  grouped[1]?.map((e) => e.toString()).join(" , ") ?? "-",
-                ),
-                const SizedBox(height: 12),
-                _buildPrizeCard(
-                  "รางวัลที่ 2",
-                  grouped[2]?.map((e) => e.toString()).join(" , ") ?? "-",
-                ),
-                const SizedBox(height: 12),
-                _buildPrizeCard(
-                  "รางวัลที่ 3",
-                  grouped[3]?.map((e) => e.toString()).join(" , ") ?? "-",
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildSmallPrize(
-                        "เลขท้าย 3 ตัว",
-                        grouped[4]?.map((e) => e.toString()).toList() ?? [],
-                        lastDigits: 3, // 👈 ตัดเหลือ 3 ตัวท้าย
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildSmallPrize(
-                        "เลขท้าย 2 ตัว",
-                        grouped[5]?.map((e) => e.toString()).toList() ?? [],
-                        lastDigits: 2, // 👈 ตัดเหลือ 2 ตัวท้าย
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 10),
+                Text(
+                  widget.currentUser.userName,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
-          );
-        },
+          ),
+          const SizedBox(height: 20),
+          // ข้อมูล
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                ListTile(
+                  title: const Text('Gmail'),
+                  trailing: Text(widget.currentUser.email),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  title: const Text('Birth Day'),
+                  trailing: Text(birthdayText),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  title: const Text('Status'),
+                  trailing: Text(widget.currentUser.status),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          // ปุ่มออกจากระบบ
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.popUntil(context, (route) => route.isFirst);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF9E090F),
+                minimumSize: const Size.fromHeight(50),
+              ),
+              child: const Text('ออกจากระบบ', style: TextStyle(fontSize: 16)),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -327,112 +303,6 @@ class _LotteryResultPageState extends State<LotteryResultPage> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'สมาชิก'),
         ],
       ),
-    );
-  }
-
-  Widget _buildPrizeCard(String title, String number) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: const BoxDecoration(
-            color: Colors.red,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(8),
-              topRight: Radius.circular(8),
-            ),
-          ),
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: Colors.red, width: 2),
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(8),
-              bottomRight: Radius.circular(8),
-            ),
-          ),
-          child: Text(
-            number,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSmallPrize(
-    String title,
-    List<String> numbers, {
-    int lastDigits = 0,
-  }) {
-    String displayNumber = "-";
-
-    if (numbers.isNotEmpty) {
-      final n = numbers.first; // 👈 เอาแค่ตัวแรก
-      displayNumber = n.length > lastDigits
-          ? n.substring(n.length - lastDigits) // 👈 ตัดเอาท้ายตามหลักที่กำหนด
-          : n;
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: const BoxDecoration(
-            color: Colors.red,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(8),
-              topRight: Radius.circular(8),
-            ),
-          ),
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: Colors.red, width: 2),
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(8),
-              bottomRight: Radius.circular(8),
-            ),
-          ),
-          child: Text(
-            displayNumber,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:lotto/model/request/UserResponse.dart';
 
 import 'package:lotto/pages/check.dart';
+import 'package:lotto/pages/create.dart';
+import 'package:lotto/pages/history.dart';
 import 'package:lotto/pages/home.dart';
+import 'package:lotto/pages/login.dart';
+import 'package:lotto/pages/profile.dart';
+import 'package:lotto/pages/reward.dart';
 
 class MemberPage extends StatefulWidget {
   final UserResponse currentUser;
@@ -45,7 +50,7 @@ class _MemberPageState extends State<MemberPage> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                "${widget.currentUser.wallet}",
+                widget.currentUser.wallet.toString(),
                 style: const TextStyle(
                   fontSize: 20,
                   color: Colors.red,
@@ -54,6 +59,7 @@ class _MemberPageState extends State<MemberPage> {
               ),
             ),
             const SizedBox(width: 12),
+
             PopupMenuButton<String>(
               icon: const Icon(Icons.menu, color: Colors.white),
               onSelected: (value) {
@@ -70,7 +76,7 @@ class _MemberPageState extends State<MemberPage> {
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          LotteryResultPage(currentUser: widget.currentUser),
+                          MemberPage(currentUser: widget.currentUser),
                     ),
                   );
                 } else if (value == 'orders') {
@@ -78,25 +84,91 @@ class _MemberPageState extends State<MemberPage> {
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
+                          HistoryPage(currentUser: widget.currentUser),
+                    ),
+                  );
+                } else if (value == 'check') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
                           LotteryResultPage(currentUser: widget.currentUser),
                     ),
                   );
+                } else if (value == 'admin') {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("นี่คือเมนูสำหรับผู้ดูแลระบบ"),
+                    ),
+                  );
                 } else if (value == 'logout') {
-                  Navigator.popUntil(context, (route) => route.isFirst);
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                    (route) => false,
+                  );
+                } else if (value == 'create') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          CreatePage(currentUser: widget.currentUser),
+                    ),
+                  );
+                } else if (value == 'reward') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          Reward(currentUser: widget.currentUser),
+                    ),
+                  );
                 }
               },
-              itemBuilder: (context) => const [
-                PopupMenuItem<String>(value: 'home', child: Text('หน้าหลัก')),
-                PopupMenuItem<String>(value: 'profile', child: Text('โปรไฟล์')),
-                PopupMenuItem<String>(
-                  value: 'orders',
-                  child: Text('คำสั่งซื้อ'),
-                ),
-                PopupMenuItem<String>(
-                  value: 'logout',
-                  child: Text('ออกจากระบบ'),
-                ),
-              ],
+              itemBuilder: (context) {
+                List<PopupMenuEntry<String>> items = [
+                  const PopupMenuItem<String>(
+                    value: 'home',
+                    child: Text('หน้าหลัก'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'profile',
+                    child: Text('โปรไฟล์'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'orders',
+                    child: Text('คำสั่งซื้อ'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'check',
+                    child: Text('ผลรางวัล'),
+                  ),
+                ];
+
+                if (widget.currentUser.status == 'admin') {
+                  items.add(
+                    PopupMenuItem<String>(
+                      value: 'create',
+                      child: const Text('สร้างหวย'),
+                    ),
+                  );
+                  items.add(
+                    PopupMenuItem<String>(
+                      value: 'reward',
+                      child: const Text('ออกรางวัล'),
+                    ),
+                  );
+                }
+
+                items.add(
+                  const PopupMenuItem<String>(
+                    value: 'logout',
+                    child: Text('ออกจากระบบ'),
+                  ),
+                );
+
+                return items;
+              },
             ),
           ],
         ),
@@ -149,9 +221,21 @@ class _MemberPageState extends State<MemberPage> {
                             ],
                           ),
                         ),
-                        Text(
-                          'รายละเอียด',
-                          style: TextStyle(fontSize: 14, color: Colors.black),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ProfilePage(
+                                  currentUser: widget.currentUser,
+                                ),
+                              ), // หน้าใหม่
+                            );
+                          },
+                          child: const Text(
+                            'รายละเอียด',
+                            style: TextStyle(fontSize: 14, color: Colors.black),
+                          ),
                         ),
                       ],
                     ),
@@ -233,16 +317,16 @@ class _MemberPageState extends State<MemberPage> {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.grey,
-        unselectedItemColor: Colors.grey,
-        backgroundColor: const Color.fromARGB(255, 253, 41, 41),
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white70,
+        backgroundColor: const Color(0xFF9E090F),
         showUnselectedLabels: true,
         onTap: (index) {
           setState(() {
             _selectedIndex = index;
           });
-
           if (index == 0) {
             Navigator.push(
               context,
@@ -251,7 +335,15 @@ class _MemberPageState extends State<MemberPage> {
               ),
             );
           }
-
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    HistoryPage(currentUser: widget.currentUser),
+              ),
+            );
+          }
           if (index == 2) {
             Navigator.push(
               context,

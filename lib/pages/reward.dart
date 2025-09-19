@@ -5,16 +5,25 @@ import 'package:flutter/material.dart';
 
 import 'package:http/http.dart' as http;
 import 'package:lotto/config/internal_config.dart';
+import 'package:lotto/model/request/UserResponse.dart';
 import 'package:lotto/model/request/lottery.dart';
+import 'package:lotto/pages/check.dart';
+import 'package:lotto/pages/create.dart';
+import 'package:lotto/pages/history.dart';
+import 'package:lotto/pages/home.dart';
+import 'package:lotto/pages/login.dart';
+import 'package:lotto/pages/member.dart';
 
 class Reward extends StatefulWidget {
-  const Reward({super.key});
+  final UserResponse currentUser;
+  const Reward({super.key, required this.currentUser});
 
   @override
   State<Reward> createState() => _RewardState();
 }
 
 class _RewardState extends State<Reward> {
+  int _selectedIndex = 0;
   String prize1 = '';
   String prize2 = '';
   String prize3 = '';
@@ -41,9 +50,154 @@ class _RewardState extends State<Reward> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('หน้าออกรางวัล'),
-        centerTitle: true,
-        backgroundColor: Colors.red[700],
+        automaticallyImplyLeading: false,
+        backgroundColor: const Color(0xFF9E090F),
+        elevation: 0,
+        titleSpacing: 0,
+        title: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: ClipOval(
+                child: Image.asset("assets/image/logo.png", fit: BoxFit.cover),
+              ),
+            ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                widget.currentUser.wallet.toString(),
+                style: const TextStyle(
+                  fontSize: 20,
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.menu, color: Colors.white),
+              onSelected: (value) {
+                if (value == 'home') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          HomePage(currentUser: widget.currentUser),
+                    ),
+                  );
+                } else if (value == 'profile') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          MemberPage(currentUser: widget.currentUser),
+                    ),
+                  );
+                } else if (value == 'orders') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          HistoryPage(currentUser: widget.currentUser),
+                    ),
+                  );
+                } else if (value == 'check') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          LotteryResultPage(currentUser: widget.currentUser),
+                    ),
+                  );
+                } else if (value == 'admin') {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("นี่คือเมนูสำหรับผู้ดูแลระบบ"),
+                    ),
+                  );
+                } else if (value == 'logout') {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                    (route) => false,
+                  );
+                } else if (value == 'create') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          CreatePage(currentUser: widget.currentUser),
+                    ),
+                  );
+                } else if (value == 'reward') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          Reward(currentUser: widget.currentUser),
+                    ),
+                  );
+                }
+              },
+              itemBuilder: (context) {
+                List<PopupMenuEntry<String>> items = [
+                  const PopupMenuItem<String>(
+                    value: 'home',
+                    child: Text('หน้าหลัก'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'profile',
+                    child: Text('โปรไฟล์'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'orders',
+                    child: Text('คำสั่งซื้อ'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'check',
+                    child: Text('ผลรางวัล'),
+                  ),
+                ];
+
+                if (widget.currentUser.status == 'admin') {
+                  items.add(
+                    PopupMenuItem<String>(
+                      value: 'create',
+                      child: const Text('สร้างหวย'),
+                    ),
+                  );
+                  items.add(
+                    PopupMenuItem<String>(
+                      value: 'reward',
+                      child: const Text('ออกรางวัล'),
+                    ),
+                  );
+                }
+
+                items.add(
+                  const PopupMenuItem<String>(
+                    value: 'logout',
+                    child: Text('ออกจากระบบ'),
+                  ),
+                );
+
+                return items;
+              },
+            ),
+          ],
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
@@ -152,6 +306,63 @@ class _RewardState extends State<Reward> {
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white70,
+        backgroundColor: const Color(0xFF9E090F),
+        showUnselectedLabels: true,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+          if (index == 0) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HomePage(currentUser: widget.currentUser),
+              ),
+            );
+          }
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    HistoryPage(currentUser: widget.currentUser),
+              ),
+            );
+          }
+          if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    LotteryResultPage(currentUser: widget.currentUser),
+              ),
+            );
+          }
+          if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    MemberPage(currentUser: widget.currentUser),
+              ),
+            );
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'หน้าแรก'),
+          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'คำสั่งซื้อ'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.card_membership),
+            label: 'ผลรางวัล',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'สมาชิก'),
+        ],
       ),
     );
   }
@@ -273,39 +484,96 @@ class _RewardState extends State<Reward> {
   }
 
   void generateRewards() {
-    if (lotteries.length < 3) return;
+    if (lotteries.isEmpty) return;
 
-    final pickedNumbers = <int>{};
+    final picked = <Lottery>[];
+    final _rnd = Random();
 
-    int pickUnique() {
-      int num;
+    Lottery pickUniqueLottery() {
+      Lottery lotto;
       do {
-        num = lotteries[_rnd.nextInt(lotteries.length)].number;
-      } while (pickedNumbers.contains(num));
-      pickedNumbers.add(num);
-      return num;
+        lotto = lotteries[_rnd.nextInt(lotteries.length)];
+      } while (picked.contains(lotto));
+      picked.add(lotto);
+      return lotto;
     }
 
+    // สุ่มรางวัลที่ 1–3
+    final l1 = pickUniqueLottery();
+    final l2 = pickUniqueLottery();
+    final l3 = pickUniqueLottery();
+
+    final prize1Num = l1.number.toString().padLeft(6, '0');
+    final prize2Num = l2.number.toString().padLeft(6, '0');
+    final prize3Num = l3.number.toString().padLeft(6, '0');
+
+    // เลขท้าย 3 ตัวจากรางวัลที่ 1
+    final last3Digits = prize1Num.substring(prize1Num.length - 3);
+
+    // หาใบถูกรางวัลเลขท้าย 3 ตัว (ยกเว้นรางวัลที่ 1)
+    final lLast3List = lotteries
+        .where(
+          (lotto) =>
+              lotto.number.toString().padLeft(6, '0').endsWith(last3Digits) &&
+              lotto.lid != l1.lid,
+        )
+        .toList();
+
+    // เลขท้าย 2 ตัว = สุ่มจากหวยที่มี
+    final randomLottoFor2 = lotteries[_rnd.nextInt(lotteries.length)];
+    final last2Digits = randomLottoFor2.number
+        .toString()
+        .padLeft(6, '0')
+        .substring(4);
+
+    // ใบถูกรางวัลเลขท้าย 2 ตัว
+    final lLast2List = lotteries
+        .where(
+          (lotto) =>
+              lotto.number.toString().padLeft(6, '0').endsWith(last2Digits),
+        )
+        .toList();
+
+    // อัพเดตรางวัล 1–3
+    updateLottoReward(1, l1.lid);
+    updateLottoReward(2, l2.lid);
+    updateLottoReward(3, l3.lid);
+
+    // อัพเดตรางวัลเลขท้าย 3 ตัวและ 2 ตัว
+    for (final lotto in lLast3List) updateLottoReward(4, lotto.lid);
+    for (final lotto in lLast2List) updateLottoReward(5, lotto.lid);
+
+    // เก็บ state สำหรับแสดงผล
     setState(() {
-      // รางวัลที่ 1-3
-      prize1 = pickUnique().toString().padLeft(6, '0');
-      prize2 = pickUnique().toString().padLeft(6, '0');
-      prize3 = pickUnique().toString().padLeft(6, '0');
-
-      // เลขท้าย 3 ตัว เอาจากรางวัลที่ 1
-      last3 = prize1.substring(prize1.length - 3);
-
-      // เลขท้าย 2 ตัว (สุ่มใหม่ ไม่ซ้ำกับเลขที่จับไปแล้ว)
-      last2 = pickUnique().toString().padLeft(6, '0').substring(4, 6);
+      prize1 = prize1Num;
+      prize2 = prize2Num;
+      prize3 = prize3Num;
+      last3 = last3Digits; // แสดงเลขท้าย 3 ตัว
+      last2 = last2Digits; // แสดงเลขท้าย 2 ตัว
     });
 
-    // บันทึกลง reward table
-    saveReward('รางวัลที่1', 6000000, lotteries[0].lid);
-    saveReward('รางวัลที่2', 200000, lotteries[1].lid);
-    saveReward('รางวัลที่3', 80000, lotteries[2].lid);
+    print('รางวัลที่ 1: $prize1Num, 2: $prize2Num, 3: $prize3Num');
+    print('เลขท้าย 3 ตัว: $last3Digits, เลขท้าย 2 ตัว: $last2Digits');
+    print('ผู้ถูกรางวัลเลขท้าย 3 ตัว: ${lLast3List.map((e) => e.number)}');
+    print('ผู้ถูกรางวัลเลขท้าย 2 ตัว: ${lLast2List.map((e) => e.number)}');
+  }
 
-    saveReward('เลขท้าย3ตัว', 2000, lotteries.last.lid);
-    saveReward('เลขท้าย2ตัว', 4000, lotteries[0].lid);
+  Future<void> updateLottoReward(int rid, int lid) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$API_ENDPOINT/updateLottoReward'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'rid': rid, 'lid': lid}),
+      );
+
+      if (response.statusCode == 200) {
+        print('อัพเดต lid=$lid เป็นรางวัล rid=$rid สำเร็จ');
+      } else {
+        print('อัพเดตล้มเหลว: ${response.body}');
+      }
+    } catch (e) {
+      print('Error update reward: $e');
+    }
   }
 
   Future<void> saveReward(String type, int money, int lid) async {

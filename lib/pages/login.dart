@@ -216,13 +216,13 @@ class _LoginPageState extends State<LoginPage> {
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
+      body: jsonEncode({'email': email, 'password': password}), // ส่ง plaintext
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       log(data.toString());
-      return UserResponse.fromJson(data['user']); // ✅ แปลงเป็น UserResponse
+      return UserResponse.fromJson(data['user']);
     } else if (response.statusCode == 401) {
       return null;
     } else {

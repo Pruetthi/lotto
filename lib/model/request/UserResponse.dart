@@ -26,7 +26,10 @@ class UserResponse {
       email: json['email'] ?? "",
       password: json['password'] ?? "",
       wallet: double.tryParse(json['wallet'].toString()) ?? 0.0,
-      birthday: DateTime.tryParse(json['birthday'] ?? "") ?? DateTime(2000),
+      birthday: json['birthday'] != null
+          ? DateTime.tryParse(json['birthday'])?.toUtc() ?? DateTime(1970, 1, 1)
+          : DateTime(1970, 1, 1),
+
       image: json['image'] ?? "",
       status: json['status'] ?? "",
     );

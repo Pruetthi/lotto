@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:crypto/crypto.dart';
 import 'package:lotto/config/internal_config.dart';
 import 'package:lotto/pages/login.dart';
 
@@ -12,6 +13,8 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final _formKey = GlobalKey<FormState>();
+
   final TextEditingController emailController = TextEditingController();
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -20,12 +23,20 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController imageController = TextEditingController();
 
   bool _obscureText = true;
+
+  // ฟังก์ชันสำหรับ hash รหัสผ่าน
+  String hashPassword(String password) {
+    final bytes = utf8.encode(password);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFEFEFEF),
       appBar: AppBar(
-        title: Text('ลงทะเบียนสมาชิกใหม่'),
+        title: const Text('ลงทะเบียนสมาชิกใหม่'),
         backgroundColor: const Color(0xFFEFEFEF),
       ),
       body: Center(
@@ -50,6 +61,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     vertical: 30,
                   ),
                   child: Form(
+                    key: _formKey,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -63,10 +75,12 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 30),
 
+                        // Email
                         TextFormField(
                           controller: emailController,
+                          keyboardType: TextInputType.emailAddress,
                           decoration: InputDecoration(
-                            hintText: "email",
+                            hintText: "Email",
                             prefixIcon: const Icon(Icons.email),
                             filled: true,
                             fillColor: Colors.grey[200],
@@ -78,15 +92,20 @@ class _RegisterPageState extends State<RegisterPage> {
                             if (value == null || value.isEmpty) {
                               return 'Please enter your email';
                             }
+                            final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+                            if (!emailRegex.hasMatch(value)) {
+                              return 'Please enter a valid email';
+                            }
                             return null;
                           },
                         ),
                         const SizedBox(height: 20),
 
+                        // Username
                         TextFormField(
                           controller: usernameController,
                           decoration: InputDecoration(
-                            hintText: "user_name",
+                            hintText: "Username",
                             prefixIcon: const Icon(Icons.person),
                             filled: true,
                             fillColor: Colors.grey[200],
@@ -96,13 +115,14 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your user_name';
+                              return 'Please enter your username';
                             }
                             return null;
                           },
                         ),
                         const SizedBox(height: 20),
 
+                        // Password
                         TextFormField(
                           controller: passwordController,
                           obscureText: _obscureText,
@@ -122,13 +142,16 @@ class _RegisterPageState extends State<RegisterPage> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 20),
 
+                        // Wallet
                         TextFormField(
                           controller: walletController,
                           decoration: InputDecoration(
                             hintText: "Wallet",
-                            prefixIcon: const Icon(Icons.attach_money),
+                            prefixIcon: const Icon(
+                              Icons.account_balance_wallet,
+                            ),
                             filled: true,
                             fillColor: Colors.grey[200],
                             border: OutlineInputBorder(
@@ -137,15 +160,17 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your Wallet';
+                              return 'Please enter your wallet';
                             }
                             return null;
                           },
                         ),
                         const SizedBox(height: 20),
 
+                        // Birthday with DatePicker
                         TextFormField(
                           controller: birthdayController,
+                          readOnly: true,
                           decoration: InputDecoration(
                             hintText: "Date of birth",
                             prefixIcon: const Icon(Icons.calendar_month),
@@ -155,14 +180,36 @@ class _RegisterPageState extends State<RegisterPage> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please select your birthday';
+                            }
+                            return null;
+                          },
+                          onTap: () async {
+                            DateTime? pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime(2000),
+                              firstDate: DateTime(1900),
+                              lastDate: DateTime.now(),
+                            );
+
+                            if (pickedDate != null) {
+                              setState(() {
+                                birthdayController.text =
+                                    "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+                              });
+                            }
+                          },
                         ),
                         const SizedBox(height: 20),
 
+                        // Image
                         TextFormField(
                           controller: imageController,
                           decoration: InputDecoration(
-                            hintText: "image",
-                            prefixIcon: const Icon(Icons.person),
+                            hintText: "Image URL",
+                            prefixIcon: const Icon(Icons.image),
                             filled: true,
                             fillColor: Colors.grey[200],
                             border: OutlineInputBorder(
@@ -172,12 +219,15 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 20),
 
+                        // Register button
                         SizedBox(
                           width: double.infinity,
                           height: 50,
                           child: ElevatedButton(
                             onPressed: () {
-                              register(context);
+                              if (_formKey.currentState!.validate()) {
+                                register(context);
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.red,
@@ -198,6 +248,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 16),
 
+                        // Already have account
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -240,13 +291,6 @@ class _RegisterPageState extends State<RegisterPage> {
     final wallet = walletController.text.trim();
     final birthday = birthdayController.text.trim();
     final image = imageController.text.trim();
-
-    if (email.isEmpty || username.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all required fields")),
-      );
-      return;
-    }
 
     try {
       final url = Uri.parse("$API_ENDPOINT/register");
