@@ -107,10 +107,35 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   );
                 } else if (value == 'logout') {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                    (route) => false,
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text("ยืนยันการออกจากระบบ"),
+                        content: Text("คุณแน่ใจหรือไม่ว่าต้องการออกจากระบบ?"),
+                        actions: [
+                          TextButton(
+                            child: Text("ยกเลิก"),
+                            onPressed: () {
+                              Navigator.of(context).pop(); // ปิด dialog
+                            },
+                          ),
+                          TextButton(
+                            child: Text("ยืนยัน"),
+                            onPressed: () {
+                              Navigator.of(context).pop(); // ปิด dialog ก่อน
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginPage(),
+                                ),
+                                (route) => false,
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
                   );
                 } else if (value == 'create') {
                   Navigator.push(
@@ -235,13 +260,48 @@ class _ProfilePageState extends State<ProfilePage> {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: ElevatedButton(
               onPressed: () {
-                Navigator.popUntil(context, (route) => route.isFirst);
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text("ยืนยันการออกจากระบบ"),
+                      content: const Text(
+                        "คุณแน่ใจหรือไม่ว่าต้องการออกจากระบบ?",
+                      ),
+                      actions: [
+                        TextButton(
+                          child: const Text("ยกเลิก"),
+                          onPressed: () {
+                            Navigator.of(context).pop(); // ปิด dialog
+                          },
+                        ),
+                        TextButton(
+                          child: const Text("ยืนยัน"),
+                          onPressed: () {
+                            Navigator.of(context).pop(); // ปิด dialog ก่อน
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginPage(),
+                              ),
+                              (route) =>
+                                  false, // เคลียร์ stack ไม่ให้ย้อนกลับได้
+                            );
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF9E090F),
                 minimumSize: const Size.fromHeight(50),
               ),
-              child: const Text('ออกจากระบบ', style: TextStyle(fontSize: 16)),
+              child: const Text(
+                'ออกจากระบบ',
+                style: TextStyle(fontSize: 16, color: Colors.white),
+              ),
             ),
           ),
         ],

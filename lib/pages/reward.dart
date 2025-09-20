@@ -32,8 +32,6 @@ class _RewardState extends State<Reward> {
 
   List<Lottery> lotteries = [];
 
-  final Random _rnd = Random();
-
   // กล่อง 6 หลักสำหรับรางวัลที่ 1
   List<String> get sixBoxes {
     final s = prize1.padLeft(6, '-');
@@ -128,10 +126,35 @@ class _RewardState extends State<Reward> {
                     ),
                   );
                 } else if (value == 'logout') {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                    (route) => false,
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text("ยืนยันการออกจากระบบ"),
+                        content: Text("คุณแน่ใจหรือไม่ว่าต้องการออกจากระบบ?"),
+                        actions: [
+                          TextButton(
+                            child: Text("ยกเลิก"),
+                            onPressed: () {
+                              Navigator.of(context).pop(); // ปิด dialog
+                            },
+                          ),
+                          TextButton(
+                            child: Text("ยืนยัน"),
+                            onPressed: () {
+                              Navigator.of(context).pop(); // ปิด dialog ก่อน
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginPage(),
+                                ),
+                                (route) => false,
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
                   );
                 } else if (value == 'create') {
                   Navigator.push(
@@ -265,7 +288,7 @@ class _RewardState extends State<Reward> {
                       ),
                       child: const Text(
                         'สุ่มออกรางวัล',
-                        style: TextStyle(fontSize: 16),
+                        style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
                     ),
                   ],
@@ -515,7 +538,9 @@ class _RewardState extends State<Reward> {
         .where(
           (lotto) =>
               lotto.number.toString().padLeft(6, '0').endsWith(last3Digits) &&
-              lotto.lid != l1.lid,
+              lotto.lid != l1.lid &&
+              lotto.lid != l2.lid &&
+              lotto.lid != l3.lid,
         )
         .toList();
 
@@ -530,7 +555,10 @@ class _RewardState extends State<Reward> {
     final lLast2List = lotteries
         .where(
           (lotto) =>
-              lotto.number.toString().padLeft(6, '0').endsWith(last2Digits),
+              lotto.number.toString().padLeft(6, '0').endsWith(last2Digits) &&
+              lotto.lid != l1.lid &&
+              lotto.lid != l2.lid &&
+              lotto.lid != l3.lid,
         )
         .toList();
 
@@ -573,28 +601,6 @@ class _RewardState extends State<Reward> {
       }
     } catch (e) {
       print('Error update reward: $e');
-    }
-  }
-
-  Future<void> saveReward(String type, int money, int lid) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$API_ENDPOINT/addReward'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'reward_type': type,
-          'reward_money': money,
-          'lid': lid,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        print('บันทึกรางวัล $type สำเร็จ');
-      } else {
-        print('บันทึกรางวัล $type ล้มเหลว: ${response.body}');
-      }
-    } catch (e) {
-      print('Error saving reward: $e');
     }
   }
 }

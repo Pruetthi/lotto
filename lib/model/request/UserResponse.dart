@@ -3,7 +3,7 @@ class UserResponse {
   final String userName;
   final String email;
   final String password;
-  final double wallet;
+  double wallet;
   final DateTime birthday;
   final String image;
   final String status;

@@ -21,6 +21,16 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   int _selectedIndex = 0;
+
+  Future<List<dynamic>> fetchMyLottos(int uid) async {
+    final response = await http.get(Uri.parse("$API_ENDPOINT/myLotto/$uid"));
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception("โหลดลอตเตอรี่ไม่สำเร็จ");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,7 +45,7 @@ class _HistoryPageState extends State<HistoryPage> {
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
               ),
@@ -60,7 +70,6 @@ class _HistoryPageState extends State<HistoryPage> {
               ),
             ),
             const SizedBox(width: 12),
-
             PopupMenuButton<String>(
               icon: const Icon(Icons.menu, color: Colors.white),
               onSelected: (value) {
@@ -96,18 +105,6 @@ class _HistoryPageState extends State<HistoryPage> {
                           LotteryResultPage(currentUser: widget.currentUser),
                     ),
                   );
-                } else if (value == 'admin') {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("นี่คือเมนูสำหรับผู้ดูแลระบบ"),
-                    ),
-                  );
-                } else if (value == 'logout') {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                    (route) => false,
-                  );
                 } else if (value == 'create') {
                   Navigator.push(
                     context,
@@ -123,6 +120,37 @@ class _HistoryPageState extends State<HistoryPage> {
                       builder: (context) =>
                           Reward(currentUser: widget.currentUser),
                     ),
+                  );
+                } else if (value == 'logout') {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text("ยืนยันการออกจากระบบ"),
+                        content: Text("คุณแน่ใจหรือไม่ว่าต้องการออกจากระบบ?"),
+                        actions: [
+                          TextButton(
+                            child: Text("ยกเลิก"),
+                            onPressed: () {
+                              Navigator.of(context).pop(); // ปิด dialog
+                            },
+                          ),
+                          TextButton(
+                            child: Text("ยืนยัน"),
+                            onPressed: () {
+                              Navigator.of(context).pop(); // ปิด dialog ก่อน
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginPage(),
+                                ),
+                                (route) => false,
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
                   );
                 }
               },
@@ -148,15 +176,15 @@ class _HistoryPageState extends State<HistoryPage> {
 
                 if (widget.currentUser.status == 'admin') {
                   items.add(
-                    PopupMenuItem<String>(
+                    const PopupMenuItem<String>(
                       value: 'create',
-                      child: const Text('สร้างหวย'),
+                      child: Text('สร้างหวย'),
                     ),
                   );
                   items.add(
-                    PopupMenuItem<String>(
+                    const PopupMenuItem<String>(
                       value: 'reward',
-                      child: const Text('ออกรางวัล'),
+                      child: Text('ออกรางวัล'),
                     ),
                   );
                 }
@@ -167,7 +195,6 @@ class _HistoryPageState extends State<HistoryPage> {
                     child: Text('ออกจากระบบ'),
                   ),
                 );
-
                 return items;
               },
             ),
@@ -176,9 +203,7 @@ class _HistoryPageState extends State<HistoryPage> {
       ),
       backgroundColor: Colors.grey[100],
       body: FutureBuilder<List<dynamic>>(
-        future: fetchMyLottos(
-          widget.currentUser.uid,
-        ), // ใช้ uid ของ user ปัจจุบัน
+        future: fetchData(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -186,25 +211,67 @@ class _HistoryPageState extends State<HistoryPage> {
           if (snapshot.hasError) {
             return Center(child: Text("เกิดข้อผิดพลาด: ${snapshot.error}"));
           }
-          final lottos = snapshot.data!;
+          final lottos = snapshot.data ?? [];
           if (lottos.isEmpty) {
-            return const Center(child: Text("คุณยังไม่ได้ซื้อหวย"));
+            return const Center(child: Text("ไม่พบข้อมูล"));
           }
+
           return ListView.builder(
             itemCount: lottos.length,
             itemBuilder: (context, index) {
               final lotto = lottos[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: ListTile(
-                  leading: const Icon(
-                    Icons.confirmation_number,
-                    color: Colors.red,
+
+              if (widget.currentUser.status == "admin") {
+                // ✅ สำหรับแอดมิน
+                return Card(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
                   ),
-                  title: Text("เลข ${lotto['number']}"),
-                  subtitle: Text("สถานะ: ${lotto['status']}"),
-                ),
-              );
+                  child: ListTile(
+                    leading: const Icon(Icons.star, color: Colors.orange),
+                    title: Text("เลข ${lotto['number']}"),
+                    subtitle: Text(
+                      "รางวัล: ${lotto['reward_type']} - ${lotto['reward_money']} บาท\n"
+                      "ผู้ซื้อ: ${lotto['user_name']} (${lotto['email']})",
+                    ),
+                  ),
+                );
+              } else {
+                // ✅ สำหรับ user ปกติ (เหมือนของเดิม)
+                return Card(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  child: Column(
+                    children: [
+                      ListTile(
+                        leading: const Icon(
+                          Icons.confirmation_number,
+                          color: Colors.red,
+                        ),
+                        title: Text("เลข ${lotto['number']}"),
+                        subtitle: Text("สถานะ: ${lotto['status']}"),
+                      ),
+                      if (lotto['rid'] != null && lotto['status'] == 'sell')
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () => claimReward(lotto['lid']),
+                            child: const Text("💰 ขึ้นเงิน"),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              }
             },
           );
         },
@@ -217,9 +284,7 @@ class _HistoryPageState extends State<HistoryPage> {
         backgroundColor: const Color(0xFF9E090F),
         showUnselectedLabels: true,
         onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
+          setState(() => _selectedIndex = index);
           if (index == 0) {
             Navigator.push(
               context,
@@ -269,12 +334,40 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
-  Future<List<dynamic>> fetchMyLottos(int uid) async {
-    final response = await http.get(Uri.parse("$API_ENDPOINT/myLotto/$uid"));
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
+  Future<List<dynamic>> fetchData() async {
+    if (widget.currentUser.status == "admin") {
+      // ✅ admin ดึงข้อมูลเฉพาะที่ถูกรางวัลแล้ว
+      final response = await http.get(
+        Uri.parse("$API_ENDPOINT/admin/rewardedLottos"),
+      );
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception("โหลดข้อมูลแอดมินล้มเหลว");
+      }
     } else {
-      throw Exception("โหลดลอตเตอรี่ไม่สำเร็จ");
+      // ✅ user ปกติดึงหวยที่ตัวเองซื้อ
+      return await fetchMyLottos(widget.currentUser.uid);
+    }
+  }
+
+  Future<void> claimReward(int lid) async {
+    final response = await http.post(
+      Uri.parse("$API_ENDPOINT/claim/$lid"), // ✅ ให้ตรงกับ Node
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("คุณได้รับ ${data['amount']} บาท")),
+      );
+      setState(() {
+        widget.currentUser.wallet += data['amount'];
+      });
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("ขึ้นเงินไม่สำเร็จ")));
     }
   }
 }

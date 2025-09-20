@@ -86,6 +86,42 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
+  Future<void> buyLotto(dynamic lotto) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$API_ENDPOINT/buyLotto'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'lid': lotto['lid'], // ใช้ lid จากผล search
+          'uid': widget.currentUser.uid,
+          'price': lotto['price'],
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("ซื้อหวยสำเร็จ")));
+
+        setState(() {
+          // อัปเดตเงินใน wallet
+          widget.currentUser.wallet -= lotto['price'];
+          // โหลดข้อมูลใหม่หลังซื้อ
+          fetchLottoWithNumber(widget.searchNumber);
+        });
+      } else {
+        final msg = jsonDecode(response.body)['message'];
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("ซื้อหวยไม่สำเร็จ: $msg")));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("เกิดข้อผิดพลาด: $e")));
+    }
+  }
+
   Future<void> fetchLottoWithNumber(String number) async {
     final url = Uri.parse('$API_ENDPOINT/searchlotto');
     try {
@@ -193,10 +229,35 @@ class _SearchPageState extends State<SearchPage> {
                     ),
                   );
                 } else if (value == 'logout') {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                    (route) => false,
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text("ยืนยันการออกจากระบบ"),
+                        content: Text("คุณแน่ใจหรือไม่ว่าต้องการออกจากระบบ?"),
+                        actions: [
+                          TextButton(
+                            child: Text("ยกเลิก"),
+                            onPressed: () {
+                              Navigator.of(context).pop(); // ปิด dialog
+                            },
+                          ),
+                          TextButton(
+                            child: Text("ยืนยัน"),
+                            onPressed: () {
+                              Navigator.of(context).pop(); // ปิด dialog ก่อน
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginPage(),
+                                ),
+                                (route) => false,
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
                   );
                 } else if (value == 'create') {
                   Navigator.push(
@@ -414,14 +475,40 @@ class _SearchPageState extends State<SearchPage> {
                             "ราคา: ${lotto['price']} ฿ | สถานะ: ${lotto['status']}",
                           ),
                           trailing: ElevatedButton(
-                            onPressed: () {
-                              // TODO: ฟังก์ชันซื้อหวย
-                            },
+                            onPressed: lotto['status'] == 'still'
+                                ? () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: const Text("ยืนยันการซื้อ"),
+                                        content: Text(
+                                          "คุณต้องการซื้อเลข ${lotto['number']} ใช่หรือไม่?",
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context),
+                                            child: const Text("ยกเลิก"),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                              buyLotto(
+                                                lotto,
+                                              ); // ✅ เรียกฟังก์ชันซื้อ
+                                            },
+                                            child: const Text("ตกลง"),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }
+                                : null,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.red,
                               foregroundColor: Colors.white,
                             ),
-                            child: Text("ซื้อเลย"),
+                            child: const Text("ซื้อเลย"),
                           ),
                         ),
                       );

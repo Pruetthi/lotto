@@ -54,6 +54,16 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  late Future<List<Lottery>> _futureLotteries;
+  int _wallet = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _futureLotteries = fetchLotteries(); // โหลดครั้งแรก
+    _wallet = widget.currentUser.wallet.toInt();
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -90,7 +100,7 @@ class _HomePageState extends State<HomePage> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                widget.currentUser.wallet.toString(),
+                _wallet.toString(),
                 style: const TextStyle(
                   fontSize: 20,
                   color: Colors.red,
@@ -142,10 +152,35 @@ class _HomePageState extends State<HomePage> {
                     ),
                   );
                 } else if (value == 'logout') {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                    (route) => false,
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text("ยืนยันการออกจากระบบ"),
+                        content: Text("คุณแน่ใจหรือไม่ว่าต้องการออกจากระบบ?"),
+                        actions: [
+                          TextButton(
+                            child: Text("ยกเลิก"),
+                            onPressed: () {
+                              Navigator.of(context).pop(); // ปิด dialog
+                            },
+                          ),
+                          TextButton(
+                            child: Text("ยืนยัน"),
+                            onPressed: () {
+                              Navigator.of(context).pop(); // ปิด dialog ก่อน
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginPage(),
+                                ),
+                                (route) => false,
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
                   );
                 } else if (value == 'create') {
                   Navigator.push(
@@ -372,7 +407,7 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 10),
 
                 FutureBuilder<List<Lottery>>(
-                  future: fetchLotteries(),
+                  future: _futureLotteries,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
@@ -436,12 +471,10 @@ class _HomePageState extends State<HomePage> {
                                               ),
                                               TextButton(
                                                 onPressed: () {
-                                                  Navigator.pop(
-                                                    context,
-                                                  ); // ปิด Dialog
+                                                  Navigator.pop(context);
                                                   buyLotto(
-                                                    lottery.lid,
-                                                  ); // เรียกซื้อหวย
+                                                    lottery,
+                                                  ); // ส่งทั้ง object
                                                 },
                                                 child: const Text("ตกลง"),
                                               ),
@@ -543,14 +576,15 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> buyLotto(int lid) async {
+  Future<void> buyLotto(Lottery lottery) async {
     try {
       final response = await http.post(
         Uri.parse('$API_ENDPOINT/buyLotto'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'lid': lid,
-          'uid': widget.currentUser.uid, // ใช้ uid ของผู้ใช้ปัจจุบัน
+          'lid': lottery.lid,
+          'uid': widget.currentUser.uid,
+          'price': lottery.price,
         }),
       );
 
@@ -558,7 +592,12 @@ class _HomePageState extends State<HomePage> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text("ซื้อหวยสำเร็จ")));
-        setState(() {}); // refresh UI
+
+        setState(() {
+          _wallet -= lottery.price; // หักเงินใน state
+          widget.currentUser.wallet = _wallet.toDouble();
+          _futureLotteries = fetchLotteries(); // โหลดใหม่
+        });
       } else {
         final msg = jsonDecode(response.body)['message'];
         ScaffoldMessenger.of(

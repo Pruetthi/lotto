@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:lotto/config/internal_config.dart';
 import 'package:lotto/model/request/UserResponse.dart';
 
 import 'package:lotto/pages/check.dart';
@@ -102,10 +106,35 @@ class _MemberPageState extends State<MemberPage> {
                     ),
                   );
                 } else if (value == 'logout') {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                    (route) => false,
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text("ยืนยันการออกจากระบบ"),
+                        content: Text("คุณแน่ใจหรือไม่ว่าต้องการออกจากระบบ?"),
+                        actions: [
+                          TextButton(
+                            child: Text("ยกเลิก"),
+                            onPressed: () {
+                              Navigator.of(context).pop(); // ปิด dialog
+                            },
+                          ),
+                          TextButton(
+                            child: Text("ยืนยัน"),
+                            onPressed: () {
+                              Navigator.of(context).pop(); // ปิด dialog ก่อน
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginPage(),
+                                ),
+                                (route) => false,
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
                   );
                 } else if (value == 'create') {
                   Navigator.push(
@@ -279,35 +308,122 @@ class _MemberPageState extends State<MemberPage> {
                   ),
 
                   SizedBox(height: 20),
+                  if (widget.currentUser.status == 'admin')
+                    GestureDetector(
+                      onTap: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: Text("ยืนยันการรีเซ็ตระบบ"),
+                            content: Text(
+                              "การรีเซ็ตระบบจะลบผู้ใช้และใบหวยทั้งหมด ยกเว้นข้อมูลของ admin คุณแน่ใจหรือไม่?",
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: Text("ยกเลิก"),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: Text("ยืนยัน"),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm == true) {
+                          await _resetSystem();
+                        }
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.red[400],
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.restart_alt,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                            SizedBox(width: 15),
+                            Text(
+                              "รีเซ็ตระบบ",
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
 
                   // Logout Card
-                  Container(
-                    padding: EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black, width: 2),
-                            borderRadius: BorderRadius.circular(8),
+                  GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text("ยืนยันการออกจากระบบ"),
+                            content: Text(
+                              "คุณแน่ใจหรือไม่ว่าต้องการออกจากระบบ?",
+                            ),
+                            actions: [
+                              TextButton(
+                                child: Text("ยกเลิก"),
+                                onPressed: () {
+                                  Navigator.of(context).pop(); // ปิด dialog
+                                },
+                              ),
+                              TextButton(
+                                child: Text("ยืนยัน"),
+                                onPressed: () {
+                                  Navigator.of(context).pop(); // ปิด dialog
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const LoginPage(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.black, width: 2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.exit_to_app,
+                              color: Colors.black,
+                              size: 24,
+                            ),
                           ),
-                          child: Icon(
-                            Icons.exit_to_app,
-                            color: Colors.black,
-                            size: 24,
+                          SizedBox(width: 15),
+                          Text(
+                            'ออกจากระบบ',
+                            style: TextStyle(fontSize: 18, color: Colors.black),
                           ),
-                        ),
-                        SizedBox(width: 15),
-                        Text(
-                          'ออกจากระบบ',
-                          style: TextStyle(fontSize: 18, color: Colors.black),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -374,5 +490,29 @@ class _MemberPageState extends State<MemberPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _resetSystem() async {
+    try {
+      final response = await http.post(
+        Uri.parse('$API_ENDPOINT/resetSystem'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("รีเซ็ตระบบสำเร็จ")));
+      } else {
+        final msg = jsonDecode(response.body)['message'];
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("ล้มเหลว: $msg")));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("เกิดข้อผิดพลาด: $e")));
+    }
   }
 }
