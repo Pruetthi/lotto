@@ -132,13 +132,13 @@ class _HistoryPageState extends State<HistoryPage> {
                           TextButton(
                             child: Text("ยกเลิก"),
                             onPressed: () {
-                              Navigator.of(context).pop(); // ปิด dialog
+                              Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
                             child: Text("ยืนยัน"),
                             onPressed: () {
-                              Navigator.of(context).pop(); // ปิด dialog ก่อน
+                              Navigator.of(context).pop();
                               Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
@@ -222,7 +222,6 @@ class _HistoryPageState extends State<HistoryPage> {
               final lotto = lottos[index];
 
               if (widget.currentUser.status == "admin") {
-                // ✅ สำหรับแอดมิน
                 return Card(
                   margin: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -238,7 +237,6 @@ class _HistoryPageState extends State<HistoryPage> {
                   ),
                 );
               } else {
-                // ✅ สำหรับ user ปกติ (เหมือนของเดิม)
                 return Card(
                   margin: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -336,7 +334,6 @@ class _HistoryPageState extends State<HistoryPage> {
 
   Future<List<dynamic>> fetchData() async {
     if (widget.currentUser.status == "admin") {
-      // ✅ admin ดึงข้อมูลเฉพาะที่ถูกรางวัลแล้ว
       final response = await http.get(
         Uri.parse("$API_ENDPOINT/admin/rewardedLottos"),
       );
@@ -346,15 +343,12 @@ class _HistoryPageState extends State<HistoryPage> {
         throw Exception("โหลดข้อมูลแอดมินล้มเหลว");
       }
     } else {
-      // ✅ user ปกติดึงหวยที่ตัวเองซื้อ
       return await fetchMyLottos(widget.currentUser.uid);
     }
   }
 
   Future<void> claimReward(int lid) async {
-    final response = await http.post(
-      Uri.parse("$API_ENDPOINT/claim/$lid"), // ✅ ให้ตรงกับ Node
-    );
+    final response = await http.post(Uri.parse("$API_ENDPOINT/claim/$lid"));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);

@@ -13,9 +13,7 @@ import 'package:lotto/pages/reward.dart';
 
 class LotteryResultPage extends StatefulWidget {
   final UserResponse currentUser;
-
   const LotteryResultPage({super.key, required this.currentUser});
-
   @override
   State<LotteryResultPage> createState() => _LotteryResultPageState();
 }
@@ -37,17 +35,16 @@ class _LotteryResultPageState extends State<LotteryResultPage> {
     Map<int, List<String>> grouped = {};
     for (var r in results) {
       grouped.putIfAbsent(r.rid, () => []);
-      grouped[r.rid]!.add(r.number); // number เป็น String อยู่แล้ว
+      grouped[r.rid]!.add(r.number);
     }
 
-    // ✅ ถ้าไม่มีเลขท้าย 3 ตัว แต่มีรางวัลที่ 1 ให้ใช้เลขท้าย 3 ตัวของรางวัลที่ 1
     if (!grouped.containsKey(4) || grouped[4]!.isEmpty) {
       if (grouped.containsKey(1) && grouped[1]!.isNotEmpty) {
         String prize1 = grouped[1]!.first;
         String last3 = prize1.length >= 3
             ? prize1.substring(prize1.length - 3)
             : prize1;
-        grouped[4] = [last3]; // ใช้แค่เลข 3 ตัวท้ายของรางวัลที่ 1
+        grouped[4] = [last3];
       }
     }
 
@@ -147,13 +144,13 @@ class _LotteryResultPageState extends State<LotteryResultPage> {
                           TextButton(
                             child: Text("ยกเลิก"),
                             onPressed: () {
-                              Navigator.of(context).pop(); // ปิด dialog
+                              Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
                             child: Text("ยืนยัน"),
                             onPressed: () {
-                              Navigator.of(context).pop(); // ปิด dialog ก่อน
+                              Navigator.of(context).pop();
                               Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
@@ -277,7 +274,7 @@ class _LotteryResultPageState extends State<LotteryResultPage> {
                       child: _buildSmallPrize(
                         "เลขท้าย 3 ตัว",
                         grouped[4]?.map((e) => e.toString()).toList() ?? [],
-                        lastDigits: 3, // 👈 ตัดเหลือ 3 ตัวท้าย
+                        lastDigits: 3,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -285,7 +282,7 @@ class _LotteryResultPageState extends State<LotteryResultPage> {
                       child: _buildSmallPrize(
                         "เลขท้าย 2 ตัว",
                         grouped[5]?.map((e) => e.toString()).toList() ?? [],
-                        lastDigits: 2, // 👈 ตัดเหลือ 2 ตัวท้าย
+                        lastDigits: 2,
                       ),
                     ),
                   ],
@@ -410,9 +407,9 @@ class _LotteryResultPageState extends State<LotteryResultPage> {
     String displayNumber = "-";
 
     if (numbers.isNotEmpty) {
-      final n = numbers.first; // 👈 เอาแค่ตัวแรก
+      final n = numbers.first;
       displayNumber = n.length > lastDigits
-          ? n.substring(n.length - lastDigits) // 👈 ตัดเอาท้ายตามหลักที่กำหนด
+          ? n.substring(n.length - lastDigits)
           : n;
     }
     return Column(

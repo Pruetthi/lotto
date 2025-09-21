@@ -24,7 +24,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool _obscureText = true;
 
-  // ฟังก์ชันสำหรับ hash รหัสผ่าน
   String hashPassword(String password) {
     final bytes = utf8.encode(password);
     final digest = sha256.convert(bytes);
@@ -75,7 +74,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 30),
 
-                        // Email
                         TextFormField(
                           controller: emailController,
                           keyboardType: TextInputType.emailAddress,
@@ -101,7 +99,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Username
                         TextFormField(
                           controller: usernameController,
                           decoration: InputDecoration(
@@ -122,7 +119,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Password
                         TextFormField(
                           controller: passwordController,
                           obscureText: _obscureText,
@@ -144,7 +140,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Wallet
                         TextFormField(
                           controller: walletController,
                           decoration: InputDecoration(
@@ -167,7 +162,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Birthday with DatePicker
                         TextFormField(
                           controller: birthdayController,
                           readOnly: true,
@@ -204,7 +198,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Image
                         TextFormField(
                           controller: imageController,
                           decoration: InputDecoration(
@@ -218,8 +211,6 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                         ),
                         const SizedBox(height: 20),
-
-                        // Register button
                         SizedBox(
                           width: double.infinity,
                           height: 50,

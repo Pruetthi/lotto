@@ -16,8 +16,7 @@ import 'package:lotto/pages/reward.dart';
 import 'package:lotto/pages/search.dart';
 
 class HomePage extends StatefulWidget {
-  final UserResponse
-  currentUser; // เปลี่ยนจาก Map<String, dynamic> เป็น UserResponse
+  final UserResponse currentUser;
 
   const HomePage({super.key, required this.currentUser});
 
@@ -27,7 +26,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<String> selectedNumbers = ['', '', '', '', '', ''];
-  List<String> lottoNumbers = ['8 8 8 8 8 8', '9 9 9 9 9 9', '0 0 0 0 0 0'];
   List<TextEditingController> controllers = List.generate(
     6,
     (_) => TextEditingController(),
@@ -60,15 +58,15 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _futureLotteries = fetchLotteries(); // โหลดครั้งแรก
+    _futureLotteries = fetchLotteries();
     _wallet = widget.currentUser.wallet.toInt();
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
+  // void _onItemTapped(int index) {
+  //   setState(() {
+  //     _selectedIndex = index;
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -162,13 +160,13 @@ class _HomePageState extends State<HomePage> {
                           TextButton(
                             child: Text("ยกเลิก"),
                             onPressed: () {
-                              Navigator.of(context).pop(); // ปิด dialog
+                              Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
                             child: Text("ยืนยัน"),
                             onPressed: () {
-                              Navigator.of(context).pop(); // ปิด dialog ก่อน
+                              Navigator.of(context).pop();
                               Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
@@ -451,30 +449,37 @@ class _HomePageState extends State<HomePage> {
                                   color: Colors.black87,
                                 ),
                               ),
+                              const SizedBox(height: 5),
+                              Text(
+                                "ราคา ${lottery.price} บาท",
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                              ),
                               ElevatedButton.icon(
-                                onPressed: lottery.status == 'still'
+                                onPressed:
+                                    (widget.currentUser.status == 'admin')
+                                    ? null
+                                    : lottery.status == 'still'
                                     ? () {
-                                        // แสดง Dialog ยืนยันก่อนซื้อ
                                         showDialog(
                                           context: context,
                                           builder: (context) => AlertDialog(
                                             title: const Text("ยืนยันการซื้อ"),
                                             content: Text(
-                                              "คุณต้องการซื้อเลข ${lottery.number} ใช่หรือไม่?",
+                                              "คุณต้องการซื้อเลข ${lottery.number} ราคา ${lottery.price} บาท ใช่หรือไม่?",
                                             ),
                                             actions: [
                                               TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                  context,
-                                                ), // ปิด Dialog
+                                                onPressed: () =>
+                                                    Navigator.pop(context),
                                                 child: const Text("ยกเลิก"),
                                               ),
                                               TextButton(
                                                 onPressed: () {
                                                   Navigator.pop(context);
-                                                  buyLotto(
-                                                    lottery,
-                                                  ); // ส่งทั้ง object
+                                                  buyLotto(lottery);
                                                 },
                                                 child: const Text("ตกลง"),
                                               ),
@@ -484,7 +489,15 @@ class _HomePageState extends State<HomePage> {
                                       }
                                     : null,
                                 icon: const Icon(Icons.shopping_cart),
-                                label: const Text('ซื้อเลย'),
+                                label: Text(
+                                  widget.currentUser.status == 'admin'
+                                      ? (lottery.status == 'still'
+                                            ? "ยังไม่ขาย"
+                                            : "ขายแล้ว")
+                                      : (lottery.status == 'still'
+                                            ? "ซื้อเลย"
+                                            : "ขายแล้ว"),
+                                ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.red,
                                   foregroundColor: Colors.white,
@@ -594,9 +607,9 @@ class _HomePageState extends State<HomePage> {
         ).showSnackBar(const SnackBar(content: Text("ซื้อหวยสำเร็จ")));
 
         setState(() {
-          _wallet -= lottery.price; // หักเงินใน state
+          _wallet -= lottery.price;
           widget.currentUser.wallet = _wallet.toDouble();
-          _futureLotteries = fetchLotteries(); // โหลดใหม่
+          _futureLotteries = fetchLotteries();
         });
       } else {
         final msg = jsonDecode(response.body)['message'];

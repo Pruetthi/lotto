@@ -116,13 +116,13 @@ class _MemberPageState extends State<MemberPage> {
                           TextButton(
                             child: Text("ยกเลิก"),
                             onPressed: () {
-                              Navigator.of(context).pop(); // ปิด dialog
+                              Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
                             child: Text("ยืนยัน"),
                             onPressed: () {
-                              Navigator.of(context).pop(); // ปิด dialog ก่อน
+                              Navigator.of(context).pop();
                               Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
@@ -212,7 +212,6 @@ class _MemberPageState extends State<MemberPage> {
                 children: [
                   SizedBox(height: 20),
 
-                  // Profile Card
                   Container(
                     padding: EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -258,7 +257,7 @@ class _MemberPageState extends State<MemberPage> {
                                 builder: (context) => ProfilePage(
                                   currentUser: widget.currentUser,
                                 ),
-                              ), // หน้าใหม่
+                              ),
                             );
                           },
                           child: const Text(
@@ -272,7 +271,6 @@ class _MemberPageState extends State<MemberPage> {
 
                   SizedBox(height: 20),
 
-                  // Balance Card
                   Container(
                     padding: EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -361,7 +359,6 @@ class _MemberPageState extends State<MemberPage> {
                       ),
                     ),
 
-                  // Logout Card
                   GestureDetector(
                     onTap: () {
                       showDialog(
@@ -376,13 +373,13 @@ class _MemberPageState extends State<MemberPage> {
                               TextButton(
                                 child: Text("ยกเลิก"),
                                 onPressed: () {
-                                  Navigator.of(context).pop(); // ปิด dialog
+                                  Navigator.of(context).pop();
                                 },
                               ),
                               TextButton(
                                 child: Text("ยืนยัน"),
                                 onPressed: () {
-                                  Navigator.of(context).pop(); // ปิด dialog
+                                  Navigator.of(context).pop();
                                   Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(

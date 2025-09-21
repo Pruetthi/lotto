@@ -21,7 +21,6 @@ class _ProfilePageState extends State<ProfilePage> {
   int _selectedIndex = 0;
   @override
   Widget build(BuildContext context) {
-    // ใช้ widget.currentUser แทน currentUser
     String birthdayText = DateFormat(
       'yyyy-MM-dd',
     ).format(widget.currentUser.birthday);
@@ -117,13 +116,13 @@ class _ProfilePageState extends State<ProfilePage> {
                           TextButton(
                             child: Text("ยกเลิก"),
                             onPressed: () {
-                              Navigator.of(context).pop(); // ปิด dialog
+                              Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
                             child: Text("ยืนยัน"),
                             onPressed: () {
-                              Navigator.of(context).pop(); // ปิด dialog ก่อน
+                              Navigator.of(context).pop();
                               Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
@@ -206,7 +205,6 @@ class _ProfilePageState extends State<ProfilePage> {
       body: Column(
         children: [
           const SizedBox(height: 20),
-          // Avatar และชื่อ
           Center(
             child: Column(
               children: [
@@ -232,7 +230,6 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           const SizedBox(height: 20),
-          // ข้อมูล
           Card(
             margin: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
@@ -255,7 +252,6 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           const SizedBox(height: 20),
-          // ปุ่มออกจากระบบ
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: ElevatedButton(
@@ -284,8 +280,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               MaterialPageRoute(
                                 builder: (context) => const LoginPage(),
                               ),
-                              (route) =>
-                                  false, // เคลียร์ stack ไม่ให้ย้อนกลับได้
+                              (route) => false,
                             );
                           },
                         ),

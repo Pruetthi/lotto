@@ -32,7 +32,6 @@ class _RewardState extends State<Reward> {
 
   List<Lottery> lotteries = [];
 
-  // กล่อง 6 หลักสำหรับรางวัลที่ 1
   List<String> get sixBoxes {
     final s = prize1.padLeft(6, '-');
     return s.split('');
@@ -136,13 +135,13 @@ class _RewardState extends State<Reward> {
                           TextButton(
                             child: Text("ยกเลิก"),
                             onPressed: () {
-                              Navigator.of(context).pop(); // ปิด dialog
+                              Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
                             child: Text("ยืนยัน"),
                             onPressed: () {
-                              Navigator.of(context).pop(); // ปิด dialog ก่อน
+                              Navigator.of(context).pop();
                               Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
@@ -226,7 +225,6 @@ class _RewardState extends State<Reward> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         child: Column(
           children: [
-            // 👉 ส่วนออกกรางวัล
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(
@@ -298,7 +296,6 @@ class _RewardState extends State<Reward> {
 
             const SizedBox(height: 18),
 
-            // 👉 ส่วนผลรางวัล
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -312,14 +309,12 @@ class _RewardState extends State<Reward> {
             ),
             const SizedBox(height: 8),
 
-            // รางวัลที่ 1-3
             buildPrizeCard('รางวัลที่ 1', prize1),
             buildPrizeCard('รางวัลที่ 2', prize2),
             buildPrizeCard('รางวัลที่ 3', prize3),
 
             const SizedBox(height: 12),
 
-            // เลขท้าย
             Row(
               children: [
                 Expanded(child: buildSmallPrize('เลขท้าย 3 ตัว', last3)),
@@ -487,12 +482,9 @@ class _RewardState extends State<Reward> {
     );
   }
 
-  // ดึงหวยจาก API
   Future<void> fetchLotteries() async {
     try {
-      final response = await http.get(
-        Uri.parse('$API_ENDPOINT/createlotto'), // เปลี่ยน IP ให้ตรงเซิร์ฟเวอร์
-      );
+      final response = await http.get(Uri.parse('$API_ENDPOINT/createlotto'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body)['data'] as List;
         setState(() {
@@ -521,7 +513,6 @@ class _RewardState extends State<Reward> {
       return lotto;
     }
 
-    // สุ่มรางวัลที่ 1–3
     final l1 = pickUniqueLottery();
     final l2 = pickUniqueLottery();
     final l3 = pickUniqueLottery();
@@ -530,10 +521,8 @@ class _RewardState extends State<Reward> {
     final prize2Num = l2.number.toString().padLeft(6, '0');
     final prize3Num = l3.number.toString().padLeft(6, '0');
 
-    // เลขท้าย 3 ตัวจากรางวัลที่ 1
     final last3Digits = prize1Num.substring(prize1Num.length - 3);
 
-    // หาใบถูกรางวัลเลขท้าย 3 ตัว (ยกเว้นรางวัลที่ 1)
     final lLast3List = lotteries
         .where(
           (lotto) =>
@@ -544,14 +533,12 @@ class _RewardState extends State<Reward> {
         )
         .toList();
 
-    // เลขท้าย 2 ตัว = สุ่มจากหวยที่มี
     final randomLottoFor2 = lotteries[_rnd.nextInt(lotteries.length)];
     final last2Digits = randomLottoFor2.number
         .toString()
         .padLeft(6, '0')
         .substring(4);
 
-    // ใบถูกรางวัลเลขท้าย 2 ตัว
     final lLast2List = lotteries
         .where(
           (lotto) =>
@@ -562,22 +549,19 @@ class _RewardState extends State<Reward> {
         )
         .toList();
 
-    // อัพเดตรางวัล 1–3
     updateLottoReward(1, l1.lid);
     updateLottoReward(2, l2.lid);
     updateLottoReward(3, l3.lid);
 
-    // อัพเดตรางวัลเลขท้าย 3 ตัวและ 2 ตัว
     for (final lotto in lLast3List) updateLottoReward(4, lotto.lid);
     for (final lotto in lLast2List) updateLottoReward(5, lotto.lid);
 
-    // เก็บ state สำหรับแสดงผล
     setState(() {
       prize1 = prize1Num;
       prize2 = prize2Num;
       prize3 = prize3Num;
-      last3 = last3Digits; // แสดงเลขท้าย 3 ตัว
-      last2 = last2Digits; // แสดงเลขท้าย 2 ตัว
+      last3 = last3Digits;
+      last2 = last2Digits;
     });
 
     print('รางวัลที่ 1: $prize1Num, 2: $prize2Num, 3: $prize3Num');

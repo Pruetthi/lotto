@@ -126,13 +126,13 @@ class _CreatePageState extends State<CreatePage> {
                           TextButton(
                             child: Text("ยกเลิก"),
                             onPressed: () {
-                              Navigator.of(context).pop(); // ปิด dialog
+                              Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
                             child: Text("ยืนยัน"),
                             onPressed: () {
-                              Navigator.of(context).pop(); // ปิด dialog ก่อน
+                              Navigator.of(context).pop();
                               Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
@@ -219,7 +219,6 @@ class _CreatePageState extends State<CreatePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // หัวข้อ
               const Text(
                 'สร้างหวย',
                 style: TextStyle(
@@ -231,7 +230,6 @@ class _CreatePageState extends State<CreatePage> {
 
               const SizedBox(height: 40),
 
-              // อันบอนที่ต้องการ
               const Text(
                 'จำนวนใบที่ต้องการ',
                 style: TextStyle(
@@ -243,7 +241,6 @@ class _CreatePageState extends State<CreatePage> {
 
               const SizedBox(height: 12),
 
-              // ช่องกรอกจำนวนใบ
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -287,7 +284,6 @@ class _CreatePageState extends State<CreatePage> {
 
               const SizedBox(height: 30),
 
-              // ราคาที่ต้องการขาย
               const Text(
                 'ราคาที่ต้องการขาย',
                 style: TextStyle(
@@ -299,7 +295,6 @@ class _CreatePageState extends State<CreatePage> {
 
               const SizedBox(height: 12),
 
-              // ช่องกรอกราคา
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -340,7 +335,6 @@ class _CreatePageState extends State<CreatePage> {
 
               const SizedBox(height: 50),
 
-              // ปุ่มเริ่มสร้างหวย
               Center(
                 child: Container(
                   width: 180,

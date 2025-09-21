@@ -15,7 +15,7 @@ import 'package:lotto/pages/reward.dart';
 class SearchPage extends StatefulWidget {
   final UserResponse currentUser;
   final String status;
-  final String searchNumber; // ✅ รับค่ามาจาก HomePage
+  final String searchNumber;
   const SearchPage({
     super.key,
     required this.status,
@@ -40,7 +40,7 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void initState() {
     super.initState();
-    fetchLotto(); // ✅ เรียกตอนเปิดหน้า
+    fetchLotto();
   }
 
   void dispose() {
@@ -74,7 +74,7 @@ class _SearchPageState extends State<SearchPage> {
         final data = jsonDecode(response.body);
         setState(() {
           lottoResults = data['data'];
-          isLoading = false; // ✅ ปิด loading
+          isLoading = false;
         });
       } else {
         setState(() => isLoading = false);
@@ -92,7 +92,7 @@ class _SearchPageState extends State<SearchPage> {
         Uri.parse('$API_ENDPOINT/buyLotto'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'lid': lotto['lid'], // ใช้ lid จากผล search
+          'lid': lotto['lid'],
           'uid': widget.currentUser.uid,
           'price': lotto['price'],
         }),
@@ -104,9 +104,8 @@ class _SearchPageState extends State<SearchPage> {
         ).showSnackBar(const SnackBar(content: Text("ซื้อหวยสำเร็จ")));
 
         setState(() {
-          // อัปเดตเงินใน wallet
           widget.currentUser.wallet -= lotto['price'];
-          // โหลดข้อมูลใหม่หลังซื้อ
+
           fetchLottoWithNumber(widget.searchNumber);
         });
       } else {
@@ -239,13 +238,13 @@ class _SearchPageState extends State<SearchPage> {
                           TextButton(
                             child: Text("ยกเลิก"),
                             onPressed: () {
-                              Navigator.of(context).pop(); // ปิด dialog
+                              Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
                             child: Text("ยืนยัน"),
                             onPressed: () {
-                              Navigator.of(context).pop(); // ปิด dialog ก่อน
+                              Navigator.of(context).pop();
                               Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
@@ -431,7 +430,6 @@ class _SearchPageState extends State<SearchPage> {
                           lottoResults = [];
                         });
 
-                        // เรียก fetch ใหม่แทน push หน้าใหม่
                         fetchLottoWithNumber(searchNumber);
                       },
                       style: ElevatedButton.styleFrom(
@@ -467,15 +465,15 @@ class _SearchPageState extends State<SearchPage> {
                     itemCount: lottoResults.length,
                     itemBuilder: (context, index) {
                       final lotto = lottoResults[index];
+                      bool isAdmin = widget.currentUser.status == 'admin';
                       return Card(
+                        color: Colors.white,
                         margin: EdgeInsets.all(8),
                         child: ListTile(
-                          title: Text("เลข: ${lotto['number']}"),
-                          subtitle: Text(
-                            "ราคา: ${lotto['price']} ฿ | สถานะ: ${lotto['status']}",
-                          ),
+                          title: Text("เลข: ${lotto['number']} "),
+                          subtitle: Text("ราคา: ${lotto['price']} ฿"),
                           trailing: ElevatedButton(
-                            onPressed: lotto['status'] == 'still'
+                            onPressed: (!isAdmin && lotto['status'] == 'still')
                                 ? () {
                                     showDialog(
                                       context: context,
@@ -493,9 +491,7 @@ class _SearchPageState extends State<SearchPage> {
                                           TextButton(
                                             onPressed: () {
                                               Navigator.pop(context);
-                                              buyLotto(
-                                                lotto,
-                                              ); // ✅ เรียกฟังก์ชันซื้อ
+                                              buyLotto(lotto);
                                             },
                                             child: const Text("ตกลง"),
                                           ),
@@ -508,7 +504,15 @@ class _SearchPageState extends State<SearchPage> {
                               backgroundColor: Colors.red,
                               foregroundColor: Colors.white,
                             ),
-                            child: const Text("ซื้อเลย"),
+                            child: Text(
+                              isAdmin
+                                  ? (lotto['status'] == 'still'
+                                        ? "ยังไม่ขาย"
+                                        : "ขายแล้ว")
+                                  : (lotto['status'] == 'still'
+                                        ? "ซื้อเลย"
+                                        : "ขายแล้ว"),
+                            ),
                           ),
                         ),
                       );

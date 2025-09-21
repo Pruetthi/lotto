@@ -216,7 +216,7 @@ class _LoginPageState extends State<LoginPage> {
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}), // ส่ง plaintext
+      body: jsonEncode({'email': email, 'password': password}),
     );
 
     if (response.statusCode == 200) {
