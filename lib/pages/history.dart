@@ -252,18 +252,33 @@ class _HistoryPageState extends State<HistoryPage> {
                         title: Text("เลข ${lotto['number']}"),
                         subtitle: Text("สถานะ: ${lotto['status']}"),
                       ),
-                      if (lotto['rid'] != null && lotto['status'] == 'sell')
+                      if (lotto['rid'] != null && lotto['status'] == 'sell' ||
+                          lotto['status'] == 'claim')
                         Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
+                              backgroundColor: lotto['status'] == 'claim'
+                                  ? Colors.grey
+                                  : Colors.green,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            onPressed: () => claimReward(lotto['lid']),
-                            child: const Text("💰 ขึ้นเงิน"),
+                            onPressed: lotto['status'] == 'claim'
+                                ? null // ปุ่ม disabled
+                                : () async {
+                                    await claimReward(lotto['lid']);
+                                    setState(() {
+                                      lotto['status'] =
+                                          'claim'; // อัปเดต state ให้ปุ่ม disabled
+                                    });
+                                  },
+                            child: Text(
+                              lotto['status'] == 'claim'
+                                  ? "💰 รับรางวัลแล้ว (${lotto['reward_type']})"
+                                  : "💰 ขึ้นเงิน (${lotto['reward_type']})",
+                            ),
                           ),
                         ),
                     ],
@@ -352,9 +367,15 @@ class _HistoryPageState extends State<HistoryPage> {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("คุณได้รับ ${data['amount']} บาท")),
+        SnackBar(
+          content: Text(
+            "🎉 คุณถูกรางวัล ${data['reward_type']} ได้รับ ${data['amount']} บาท",
+          ),
+        ),
       );
+
       setState(() {
         widget.currentUser.wallet += data['amount'];
       });
