@@ -116,13 +116,13 @@ class _MemberPageState extends State<MemberPage> {
                           TextButton(
                             child: Text("ยกเลิก"),
                             onPressed: () {
-                              Navigator.of(context).pop();
+                              Navigator.of(context).pop(); // ปิด dialog
                             },
                           ),
                           TextButton(
                             child: Text("ยืนยัน"),
                             onPressed: () {
-                              Navigator.of(context).pop();
+                              Navigator.of(context).pop(); // ปิด dialog ก่อน
                               Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
@@ -212,6 +212,7 @@ class _MemberPageState extends State<MemberPage> {
                 children: [
                   SizedBox(height: 20),
 
+                  // Profile Card
                   Container(
                     padding: EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -257,7 +258,7 @@ class _MemberPageState extends State<MemberPage> {
                                 builder: (context) => ProfilePage(
                                   currentUser: widget.currentUser,
                                 ),
-                              ),
+                              ), // หน้าใหม่
                             );
                           },
                           child: const Text(
@@ -271,6 +272,7 @@ class _MemberPageState extends State<MemberPage> {
 
                   SizedBox(height: 20),
 
+                  // Balance Card
                   Container(
                     padding: EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -306,59 +308,8 @@ class _MemberPageState extends State<MemberPage> {
                   ),
 
                   SizedBox(height: 20),
-                  if (widget.currentUser.status == 'admin')
-                    GestureDetector(
-                      onTap: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: Text("ยืนยันการรีเซ็ตระบบ"),
-                            content: Text(
-                              "การรีเซ็ตระบบจะลบผู้ใช้และใบหวยทั้งหมด ยกเว้นข้อมูลของ admin คุณแน่ใจหรือไม่?",
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: Text("ยกเลิก"),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                child: Text("ยืนยัน"),
-                              ),
-                            ],
-                          ),
-                        );
 
-                        if (confirm == true) {
-                          await _resetSystem();
-                        }
-                      },
-                      child: Container(
-                        padding: EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.red[400],
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.restart_alt,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                            SizedBox(width: 15),
-                            Text(
-                              "รีเซ็ตระบบ",
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
+                  // Logout Card
                   GestureDetector(
                     onTap: () {
                       showDialog(
@@ -373,13 +324,13 @@ class _MemberPageState extends State<MemberPage> {
                               TextButton(
                                 child: Text("ยกเลิก"),
                                 onPressed: () {
-                                  Navigator.of(context).pop();
+                                  Navigator.of(context).pop(); // ปิด dialog
                                 },
                               ),
                               TextButton(
                                 child: Text("ยืนยัน"),
                                 onPressed: () {
-                                  Navigator.of(context).pop();
+                                  Navigator.of(context).pop(); // ปิด dialog
                                   Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
@@ -423,6 +374,71 @@ class _MemberPageState extends State<MemberPage> {
                       ),
                     ),
                   ),
+                  SizedBox(height: 20),
+
+                  if (widget.currentUser.status == 'admin')
+                    GestureDetector(
+                      onTap: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: Text("ยืนยันการรีเซ็ตระบบ"),
+                            content: Text(
+                              "การรีเซ็ตระบบจะลบผู้ใช้และใบหวยทั้งหมด ยกเว้นข้อมูลของ admin คุณแน่ใจหรือไม่?",
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: Text("ยกเลิก"),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: Text("ยืนยัน"),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm == true) {
+                          await _resetSystem();
+                        }
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Colors.black,
+                                  width: 2,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.restart_alt,
+                                color: Colors.black,
+                                size: 24,
+                              ),
+                            ),
+                            SizedBox(width: 15),
+                            Text(
+                              "รีเซ็ตระบบ",
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

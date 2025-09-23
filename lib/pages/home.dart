@@ -98,7 +98,7 @@ class _HomePageState extends State<HomePage> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                _wallet.toString(),
+                _wallet.toDouble().toString(),
                 style: const TextStyle(
                   fontSize: 20,
                   color: Colors.red,

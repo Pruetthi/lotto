@@ -273,7 +273,7 @@ class _RewardState extends State<Reward> {
                     ),
                     const SizedBox(height: 14),
                     ElevatedButton(
-                      onPressed: generateRewards,
+                      onPressed: confirmGenerateRewards, // generateRewards,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red[700],
                         padding: const EdgeInsets.symmetric(
@@ -482,6 +482,38 @@ class _RewardState extends State<Reward> {
     );
   }
 
+  void confirmGenerateRewards() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("เลือกวิธีออกรางวัล"),
+          content: const Text(
+            "คุณต้องการสุ่มจากหวยทั้งหมด หรือสุ่มจากเฉพาะที่มีคนซื้อแล้ว?",
+          ),
+          actions: [
+            TextButton(
+              child: const Text("หวยทั้งหมด"),
+              onPressed: () {
+                Navigator.of(context).pop();
+                generateRewards(fromAll: true); // ส่ง true = สุ่มจากทั้งหมด
+              },
+            ),
+            TextButton(
+              child: const Text("เฉพาะที่ซื้อแล้ว"),
+              onPressed: () {
+                Navigator.of(context).pop();
+                generateRewards(
+                  fromAll: false,
+                ); // ส่ง false = สุ่มจากที่ขายแล้ว
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> fetchLotteries() async {
     try {
       final response = await http.get(Uri.parse('$API_ENDPOINT/createlotto'));
@@ -498,21 +530,37 @@ class _RewardState extends State<Reward> {
     }
   }
 
-  void generateRewards() {
-    if (lotteries.isEmpty) return;
+  Future<void> generateRewards({bool fromAll = true}) async {
+    // เลือก source ตามจากทั้งหมด or เฉพาะที่ขายแล้ว
+    final sourceLotteries = fromAll
+        ? lotteries
+        : lotteries.where((l) => l.status == 'sell').toList();
+
+    if (sourceLotteries.length < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("หวยไม่พอสำหรับสุ่มรางวัล (ต้องมีอย่างน้อย 3 ใบ)"),
+        ),
+      );
+      return;
+    }
 
     final picked = <Lottery>[];
     final _rnd = Random();
 
     Lottery pickUniqueLottery() {
       Lottery lotto;
+      int tries = 0;
       do {
-        lotto = lotteries[_rnd.nextInt(lotteries.length)];
+        lotto = sourceLotteries[_rnd.nextInt(sourceLotteries.length)];
+        tries++;
+        if (tries > 50) break; // ป้องกัน loop ไม่รู้จบ (ป้องกันกรณีข้อมูลแปลก)
       } while (picked.contains(lotto));
       picked.add(lotto);
       return lotto;
     }
 
+    // สุ่มรางวัลที่ 1-3 (unique)
     final l1 = pickUniqueLottery();
     final l2 = pickUniqueLottery();
     final l3 = pickUniqueLottery();
@@ -521,41 +569,76 @@ class _RewardState extends State<Reward> {
     final prize2Num = l2.number.toString().padLeft(6, '0');
     final prize3Num = l3.number.toString().padLeft(6, '0');
 
+    final exclude2 = {
+      prize1Num.substring(prize1Num.length - 2),
+      prize2Num.substring(prize2Num.length - 2),
+      prize3Num.substring(prize3Num.length - 2),
+    };
+
+    // หา candidate ที่เป็นไปได้ (ตัดรางวัล 1–3 และตัดเลขท้ายที่ต้องห้ามออก)
+    final candidate2Digits = sourceLotteries.where((lotto) {
+      final numStr = lotto.number.toString().padLeft(6, '0');
+      final last2 = numStr.substring(numStr.length - 2);
+      return !exclude2.contains(last2) &&
+          lotto.lid != l1.lid &&
+          lotto.lid != l2.lid &&
+          lotto.lid != l3.lid;
+    }).toList();
+
+    // เลขท้าย 3 ตัว: เอาจากรางวัลที่ 1 (ตามที่ต้องการ)
     final last3Digits = prize1Num.substring(prize1Num.length - 3);
 
-    final lLast3List = lotteries
-        .where(
-          (lotto) =>
-              lotto.number.toString().padLeft(6, '0').endsWith(last3Digits) &&
-              lotto.lid != l1.lid &&
-              lotto.lid != l2.lid &&
-              lotto.lid != l3.lid,
-        )
-        .toList();
+    // เลขท้าย 2 ตัว: สุ่มใหม่ 00-99 (ไม่เกี่ยวกับรางวัลที่ 1)
+    // เลขท้าย 2 ตัว
+    // เลือกจาก candidate (ถ้ามี)
+    String last2Digits;
+    if (candidate2Digits.isNotEmpty) {
+      final picked = candidate2Digits[_rnd.nextInt(candidate2Digits.length)];
+      last2Digits = picked.number.toString().padLeft(6, '0').substring(4);
+    } else {
+      // fallback ถ้าไม่มีจริง ๆ (ป้องกัน crash)
+      last2Digits = _rnd.nextInt(100).toString().padLeft(2, '0');
+    }
 
-    final randomLottoFor2 = lotteries[_rnd.nextInt(lotteries.length)];
-    final last2Digits = randomLottoFor2.number
-        .toString()
-        .padLeft(6, '0')
-        .substring(4);
+    // หาใบที่ถูกรางวัลเลขท้าย 3 (ยกเว้น r1,r2,r3)
+    final lLast3List = lotteries.where((lotto) {
+      final s = lotto.number.toString().padLeft(6, '0');
+      return s.endsWith(last3Digits) &&
+          lotto.lid != l1.lid &&
+          lotto.lid != l2.lid &&
+          lotto.lid != l3.lid;
+    }).toList();
 
-    final lLast2List = lotteries
-        .where(
-          (lotto) =>
-              lotto.number.toString().padLeft(6, '0').endsWith(last2Digits) &&
-              lotto.lid != l1.lid &&
-              lotto.lid != l2.lid &&
-              lotto.lid != l3.lid,
-        )
-        .toList();
+    // หาใบที่ถูกรางวัลเลขท้าย 2 (ยกเว้น r1,r2,r3)
+    final lLast2List = lotteries.where((lotto) {
+      final s = lotto.number.toString().padLeft(6, '0');
+      return s.endsWith(last2Digits) &&
+          lotto.lid != l1.lid &&
+          lotto.lid != l2.lid &&
+          lotto.lid != l3.lid;
+    }).toList();
 
-    updateLottoReward(1, l1.lid);
-    updateLottoReward(2, l2.lid);
-    updateLottoReward(3, l3.lid);
+    // อัพเดตในฐานข้อมูล (await เพื่อให้แน่ใจว่า update เสร็จ)
+    try {
+      await updateLottoReward(1, l1.lid);
+      await updateLottoReward(2, l2.lid);
+      await updateLottoReward(3, l3.lid);
 
-    for (final lotto in lLast3List) updateLottoReward(4, lotto.lid);
-    for (final lotto in lLast2List) updateLottoReward(5, lotto.lid);
+      for (final lotto in lLast3List) {
+        await updateLottoReward(4, lotto.lid);
+      }
+      for (final lotto in lLast2List) {
+        await updateLottoReward(5, lotto.lid);
+      }
+    } catch (e) {
+      print('อัพเดตรางวัลล้มเหลว: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("อัพเดตรางวัลล้มเหลว: $e")));
+      return;
+    }
 
+    // เก็บ state เพื่อแสดงผลบน UI
     setState(() {
       prize1 = prize1Num;
       prize2 = prize2Num;
@@ -564,10 +647,11 @@ class _RewardState extends State<Reward> {
       last2 = last2Digits;
     });
 
-    print('รางวัลที่ 1: $prize1Num, 2: $prize2Num, 3: $prize3Num');
-    print('เลขท้าย 3 ตัว: $last3Digits, เลขท้าย 2 ตัว: $last2Digits');
-    print('ผู้ถูกรางวัลเลขท้าย 3 ตัว: ${lLast3List.map((e) => e.number)}');
-    print('ผู้ถูกรางวัลเลขท้าย 2 ตัว: ${lLast2List.map((e) => e.number)}');
+    // debug log
+    print('รางวัลที่1: $prize1Num, last3: $last3Digits');
+    print(
+      'เลขท้าย2 (สุ่ม): $last2Digits, ผู้ถูกรางวัล2ตัว: ${lLast2List.map((e) => e.number)}',
+    );
   }
 
   Future<void> updateLottoReward(int rid, int lid) async {
