@@ -461,60 +461,66 @@ class _SearchPageState extends State<SearchPage> {
                 ? Center(child: CircularProgressIndicator())
                 : lottoResults.isEmpty
                 ? Center(child: Text("ไม่พบเลขที่ค้นหา"))
-                : ListView.builder(
-                    itemCount: lottoResults.length,
-                    itemBuilder: (context, index) {
-                      final lotto = lottoResults[index];
-                      bool isAdmin = widget.currentUser.status == 'admin';
-                      return Card(
-                        color: Colors.white,
-                        margin: EdgeInsets.all(8),
-                        child: ListTile(
-                          title: Text("เลข: ${lotto['number']} "),
-                          subtitle: Text("ราคา: ${lotto['price']} ฿"),
-                          trailing: ElevatedButton(
-                            onPressed: (!isAdmin && lotto['status'] == 'still')
-                                ? () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        title: const Text("ยืนยันการซื้อ"),
-                                        content: Text(
-                                          "คุณต้องการซื้อเลข ${lotto['number']} ใช่หรือไม่?",
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context),
-                                            child: const Text("ยกเลิก"),
+                : Builder(
+                    builder: (context) {
+                      final filteredResults = lottoResults
+                          .where((lotto) => lotto['status'] == 'still')
+                          .toList();
+
+                      if (filteredResults.isEmpty) {
+                        return Center(child: Text("ไม่มีเลขที่ยังไม่ขาย"));
+                      }
+
+                      return ListView.builder(
+                        itemCount: filteredResults.length,
+                        itemBuilder: (context, index) {
+                          final lotto = filteredResults[index];
+                          bool isAdmin = widget.currentUser.status == 'admin';
+
+                          return Card(
+                            color: Colors.white,
+                            margin: EdgeInsets.all(8),
+                            child: ListTile(
+                              title: Text("เลข: ${lotto['number']} "),
+                              subtitle: Text("ราคา: ${lotto['price']} ฿"),
+                              trailing: ElevatedButton(
+                                onPressed:
+                                    (!isAdmin && lotto['status'] == 'still')
+                                    ? () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: const Text("ยืนยันการซื้อ"),
+                                            content: Text(
+                                              "คุณต้องการซื้อเลข ${lotto['number']} ใช่หรือไม่?",
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(context),
+                                                child: const Text("ยกเลิก"),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.pop(context);
+                                                  buyLotto(lotto);
+                                                },
+                                                child: const Text("ตกลง"),
+                                              ),
+                                            ],
                                           ),
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.pop(context);
-                                              buyLotto(lotto);
-                                            },
-                                            child: const Text("ตกลง"),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }
-                                : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
+                                        );
+                                      }
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white,
+                                ),
+                                child: Text(isAdmin ? "ยังไม่ขาย" : "ซื้อเลย"),
+                              ),
                             ),
-                            child: Text(
-                              isAdmin
-                                  ? (lotto['status'] == 'still'
-                                        ? "ยังไม่ขาย"
-                                        : "ขายแล้ว")
-                                  : (lotto['status'] == 'still'
-                                        ? "ซื้อเลย"
-                                        : "ขายแล้ว"),
-                            ),
-                          ),
-                        ),
+                          );
+                        },
                       );
                     },
                   ),

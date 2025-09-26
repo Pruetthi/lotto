@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:crypto/crypto.dart';
 import 'package:lotto/config/internal_config.dart';
 import 'package:lotto/pages/login.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -13,6 +15,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  File? _image;
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController emailController = TextEditingController();
@@ -198,18 +201,24 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 20),
 
-                        TextFormField(
-                          controller: imageController,
-                          decoration: InputDecoration(
-                            hintText: "Image URL",
-                            prefixIcon: const Icon(Icons.image),
-                            filled: true,
-                            fillColor: Colors.grey[200],
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                        Column(
+                          children: [
+                            _image != null
+                                ? Image.file(
+                                    _image!,
+                                    width: 100,
+                                    height: 100,
+                                    fit: BoxFit.cover,
+                                  )
+                                : const Icon(Icons.person, size: 100),
+                            TextButton.icon(
+                              onPressed: pickImage,
+                              icon: const Icon(Icons.image),
+                              label: const Text("เลือกรูปโปรไฟล์"),
                             ),
-                          ),
+                          ],
                         ),
+
                         const SizedBox(height: 20),
                         SizedBox(
                           width: double.infinity,
@@ -281,42 +290,64 @@ class _RegisterPageState extends State<RegisterPage> {
     final password = passwordController.text.trim();
     final wallet = walletController.text.trim();
     final birthday = birthdayController.text.trim();
-    final image = imageController.text.trim();
 
     try {
-      final url = Uri.parse("$API_ENDPOINT/register");
-
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": email,
-          "user_name": username,
-          "password": password,
-          "wallet": wallet,
-          "birthday": birthday,
-          "image": image,
-        }),
+      var request = http.MultipartRequest(
+        "POST",
+        Uri.parse("$API_ENDPOINT/register"),
       );
 
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Registration successful!")),
-        );
+      // ใส่ fields
+      request.fields['email'] = email;
+      request.fields['user_name'] = username;
+      request.fields['password'] = password;
+      request.fields['wallet'] = wallet;
+      request.fields['birthday'] = birthday;
 
-        Navigator.pushReplacement(
+      // ใส่ไฟล์รูปถ้ามี
+      if (_image != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath('image', _image!.path),
+        );
+      }
+
+      var response = await request.send();
+      var respStr = await response.stream
+          .bytesToString(); // อ่านข้อความจาก server
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // แสดง SnackBar ก่อน
+        ScaffoldMessenger.of(
           context,
+        ).showSnackBar(SnackBar(content: Text("✅ Success: $respStr")));
+
+        // รอให้ SnackBar แสดงประมาณ 1 วินาที แล้วค่อยไปหน้า Login
+        await Future.delayed(const Duration(seconds: 1));
+
+        if (!mounted) return; // เช็คว่า widget ยังอยู่ใน tree
+        Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const LoginPage()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to register: ${response.body}")),
+          SnackBar(
+            content: Text("❌ Failed: ${response.statusCode} - $respStr"),
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Error: $e")));
+      ).showSnackBar(SnackBar(content: Text("❌ Error: $e")));
+    }
+  }
+
+  Future<void> pickImage() async {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() {
+        _image = File(picked.path);
+      });
     }
   }
 }

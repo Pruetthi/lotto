@@ -415,7 +415,9 @@ class _HomePageState extends State<HomePage> {
                       return const Center(child: Text('ไม่มีเลขเด็ดล่าสุด'));
                     }
 
-                    final lotteries = snapshot.data!;
+                    final lotteries = snapshot.data!
+                        .where((lottery) => lottery.status == 'still')
+                        .toList();
 
                     return Column(
                       children: List.generate(lotteries.length, (index) {

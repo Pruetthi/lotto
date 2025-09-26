@@ -8,6 +8,7 @@ import 'package:lotto/pages/home.dart';
 import 'package:lotto/pages/login.dart';
 import 'package:lotto/pages/member.dart';
 import 'package:lotto/pages/reward.dart';
+import 'dart:io';
 
 class ProfilePage extends StatefulWidget {
   final UserResponse currentUser;
@@ -19,6 +20,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   int _selectedIndex = 0;
+  File? imageFile; // เก็บรูปที่เลือกจากมือถือ
   @override
   Widget build(BuildContext context) {
     String birthdayText = DateFormat(
@@ -211,13 +213,30 @@ class _ProfilePageState extends State<ProfilePage> {
                 CircleAvatar(
                   radius: 50,
                   backgroundColor: Colors.black,
-                  backgroundImage: widget.currentUser.image.isNotEmpty
-                      ? NetworkImage(widget.currentUser.image)
-                      : null,
-                  child: widget.currentUser.image.isEmpty
-                      ? const Icon(Icons.person, color: Colors.white, size: 50)
-                      : null,
+                  child: ClipOval(
+                    child: widget.currentUser.image.isNotEmpty
+                        ? Image.network(
+                            widget.currentUser.image,
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              print("Error loading image: $error");
+                              return const Icon(
+                                Icons.person,
+                                size: 50,
+                                color: Colors.white,
+                              );
+                            },
+                          )
+                        : const Icon(
+                            Icons.person,
+                            size: 50,
+                            color: Colors.white,
+                          ),
+                  ),
                 ),
+
                 const SizedBox(height: 10),
                 Text(
                   widget.currentUser.userName,

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "480846306129",
+    "project_id": "imagelotto-5902f",
+    "storage_bucket": "imagelotto-5902f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:480846306129:android:86ce970fc627de13fed170",
+        "android_client_info": {
+          "package_name": "com.example.lotto"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAyg_LLzOf1pD0TlCJsS_Lwn-jlZVGoSkM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

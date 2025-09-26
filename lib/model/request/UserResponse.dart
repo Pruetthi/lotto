@@ -5,7 +5,7 @@ class UserResponse {
   final String password;
   double wallet;
   final DateTime birthday;
-  final String image;
+  String image;
   final String status;
 
   UserResponse({
