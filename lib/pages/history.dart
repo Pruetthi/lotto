@@ -227,12 +227,68 @@ class _HistoryPageState extends State<HistoryPage> {
                     horizontal: 12,
                     vertical: 6,
                   ),
-                  child: ListTile(
-                    leading: const Icon(Icons.star, color: Colors.orange),
-                    title: Text("เลข ${lotto['number']}"),
-                    subtitle: Text(
-                      "รางวัล: ${lotto['reward_type']} - ${lotto['reward_money']} บาท\n"
-                      "ผู้ซื้อ: ${lotto['user_name']} (${lotto['email']})",
+                  child: Container(
+                    height: 170,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      image: DecorationImage(
+                        image: AssetImage("assets/image/background.png"),
+                        fit: BoxFit.cover,
+                        alignment: Alignment.topLeft,
+                      ),
+                    ),
+                    child: ListTile(
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: List.generate(
+                          lotto['number'].toString().length,
+                          (i) => Container(
+                            width: 40,
+                            height: 50,
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            alignment: Alignment.center,
+                            child: Text(
+                              lotto['number'].toString()[i],
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 8),
+                          Text(
+                            "รางวัล: ${lotto['reward_type']} - ${lotto['reward_money']} บาท",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color.fromARGB(221, 43, 255, 0),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "ผู้ซื้อ: ${lotto['user_name']} (${lotto['email']})",
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "สถานะ: ${lotto['status']}",
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -242,46 +298,75 @@ class _HistoryPageState extends State<HistoryPage> {
                     horizontal: 12,
                     vertical: 6,
                   ),
-                  child: Column(
-                    children: [
-                      ListTile(
-                        leading: const Icon(
-                          Icons.confirmation_number,
-                          color: Colors.red,
-                        ),
-                        title: Text("เลข ${lotto['number']}"),
-                        subtitle: Text("สถานะ: ${lotto['status']}"),
+                  child: Container(
+                    height: 160,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      image: DecorationImage(
+                        image: AssetImage("assets/image/background.png"),
+                        fit: BoxFit.cover,
+                        alignment: Alignment.topLeft,
                       ),
-                      if (lotto['rid'] != null && lotto['status'] == 'sell' ||
-                          lotto['status'] == 'claim')
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: lotto['status'] == 'claim'
-                                  ? Colors.grey
-                                  : Colors.green,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: lotto['status'] == 'claim'
-                                ? null // ปุ่ม disabled
-                                : () async {
-                                    await claimReward(lotto['lid']);
-                                    setState(() {
-                                      lotto['status'] =
-                                          'claim'; // อัปเดต state ให้ปุ่ม disabled
-                                    });
-                                  },
-                            child: Text(
-                              lotto['status'] == 'claim'
-                                  ? "💰 รับรางวัลแล้ว (${lotto['reward_type']})"
-                                  : "💰 ขึ้นเงิน (${lotto['reward_type']})",
-                            ),
+                    ),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            lotto['number'].toString().length,
+                            (i) {
+                              return Container(
+                                width: 40,
+                                height: 50,
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  lotto['number'].toString()[i],
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
-                    ],
+                        if (lotto['rid'] != null && lotto['status'] == 'sell' ||
+                            lotto['status'] == 'claim')
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: lotto['status'] == 'claim'
+                                    ? Colors.grey
+                                    : Colors.green,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: lotto['status'] == 'claim'
+                                  ? null // ปุ่ม disabled
+                                  : () async {
+                                      await claimReward(lotto['lid']);
+                                      setState(() {
+                                        lotto['status'] =
+                                            'claim'; // อัปเดต state ให้ปุ่ม disabled
+                                      });
+                                    },
+                              child: Text(
+                                lotto['status'] == 'claim'
+                                    ? " รับรางวัลแล้ว (${lotto['reward_type']})"
+                                    : " ขึ้นเงิน (${lotto['reward_type']})",
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 );
               }
@@ -371,7 +456,7 @@ class _HistoryPageState extends State<HistoryPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "🎉 คุณถูกรางวัล ${data['reward_type']} ได้รับ ${data['amount']} บาท",
+            " คุณถูกรางวัล ${data['reward_type']} ได้รับ ${data['amount']} บาท",
           ),
         ),
       );

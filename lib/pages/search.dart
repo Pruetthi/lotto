@@ -478,45 +478,117 @@ class _SearchPageState extends State<SearchPage> {
                           bool isAdmin = widget.currentUser.status == 'admin';
 
                           return Card(
-                            color: Colors.white,
-                            margin: EdgeInsets.all(8),
-                            child: ListTile(
-                              title: Text("เลข: ${lotto['number']} "),
-                              subtitle: Text("ราคา: ${lotto['price']} ฿"),
-                              trailing: ElevatedButton(
-                                onPressed:
-                                    (!isAdmin && lotto['status'] == 'still')
-                                    ? () {
-                                        showDialog(
-                                          context: context,
-                                          builder: (context) => AlertDialog(
-                                            title: const Text("ยืนยันการซื้อ"),
-                                            content: Text(
-                                              "คุณต้องการซื้อเลข ${lotto['number']} ใช่หรือไม่?",
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () =>
-                                                    Navigator.pop(context),
-                                                child: const Text("ยกเลิก"),
-                                              ),
-                                              TextButton(
-                                                onPressed: () {
-                                                  Navigator.pop(context);
-                                                  buyLotto(lotto);
-                                                },
-                                                child: const Text("ตกลง"),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      }
-                                    : null,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                  foregroundColor: Colors.white,
+                            margin: EdgeInsets.all(12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 4,
+                            child: Container(
+                              height: 150,
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                image: DecorationImage(
+                                  image: AssetImage(
+                                    "assets/image/background.png",
+                                  ),
+                                  fit: BoxFit.cover,
+                                  alignment: Alignment.topLeft,
                                 ),
-                                child: Text(isAdmin ? "ยังไม่ขาย" : "ซื้อเลย"),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: List.generate(6, (index) {
+                                      return Container(
+                                        width: 40,
+                                        height: 50,
+                                        margin: EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                        ),
+                                        alignment: Alignment.center,
+
+                                        child: Text(
+                                          lotto['number'].toString()[index],
+                                          style: TextStyle(
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      );
+                                    }),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        "ราคา: ${lotto['price']} ฿",
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      Align(
+                                        alignment: Alignment.bottomRight,
+                                        child: ElevatedButton(
+                                          onPressed:
+                                              (!isAdmin &&
+                                                  lotto['status'] == 'still')
+                                              ? () {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (context) =>
+                                                        AlertDialog(
+                                                          title: const Text(
+                                                            "ยืนยันการซื้อ",
+                                                          ),
+                                                          content: Text(
+                                                            "คุณต้องการซื้อเลข ${lotto['number']} ใช่หรือไม่?",
+                                                          ),
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.pop(
+                                                                    context,
+                                                                  ),
+                                                              child: const Text(
+                                                                "ยกเลิก",
+                                                              ),
+                                                            ),
+                                                            TextButton(
+                                                              onPressed: () {
+                                                                Navigator.pop(
+                                                                  context,
+                                                                );
+                                                                buyLotto(lotto);
+                                                              },
+                                                              child: const Text(
+                                                                "ตกลง",
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                  );
+                                                }
+                                              : null,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red,
+                                            foregroundColor: Colors.white,
+                                          ),
+                                          child: Text(
+                                            isAdmin ? "ยังไม่ขาย" : "ซื้อเลย",
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
                           );
@@ -531,7 +603,7 @@ class _SearchPageState extends State<SearchPage> {
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white70,
+        unselectedItemColor: Colors.white,
         backgroundColor: const Color(0xFF9E090F),
         showUnselectedLabels: true,
         onTap: (index) {

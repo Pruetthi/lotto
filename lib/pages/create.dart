@@ -382,7 +382,7 @@ class _CreatePageState extends State<CreatePage> {
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white70,
+        unselectedItemColor: Colors.white,
         backgroundColor: const Color(0xFF9E090F),
         showUnselectedLabels: true,
         onTap: (index) {
@@ -460,8 +460,7 @@ class _CreatePageState extends State<CreatePage> {
               title: const Text("สำเร็จ"),
               content: Text(
                 "สร้างหวยจำนวน ${data['count']} ใบ\n"
-                "ราคา ${data['price']} บาท/ใบ\n"
-                "สถานะเริ่มต้น: ${data['status']}",
+                "ราคา ${data['price']} บาท/ใบ\n",
               ),
               actions: [
                 TextButton(

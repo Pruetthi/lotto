@@ -273,7 +273,7 @@ class _RewardState extends State<Reward> {
                     ),
                     const SizedBox(height: 14),
                     ElevatedButton(
-                      onPressed: confirmGenerateRewards, // generateRewards,
+                      onPressed: confirmGenerateRewards,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red[700],
                         padding: const EdgeInsets.symmetric(
@@ -329,7 +329,7 @@ class _RewardState extends State<Reward> {
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white70,
+        unselectedItemColor: Colors.white,
         backgroundColor: const Color(0xFF9E090F),
         showUnselectedLabels: true,
         onTap: (index) {
@@ -496,16 +496,14 @@ class _RewardState extends State<Reward> {
               child: const Text("หวยทั้งหมด"),
               onPressed: () {
                 Navigator.of(context).pop();
-                generateRewards(fromAll: true); // ส่ง true = สุ่มจากทั้งหมด
+                generateRewards(fromAll: true);
               },
             ),
             TextButton(
               child: const Text("เฉพาะที่ซื้อแล้ว"),
               onPressed: () {
                 Navigator.of(context).pop();
-                generateRewards(
-                  fromAll: false,
-                ); // ส่ง false = สุ่มจากที่ขายแล้ว
+                generateRewards(fromAll: false);
               },
             ),
           ],
@@ -531,7 +529,6 @@ class _RewardState extends State<Reward> {
   }
 
   Future<void> generateRewards({bool fromAll = true}) async {
-    // เลือก source ตามจากทั้งหมด or เฉพาะที่ขายแล้ว
     final sourceLotteries = fromAll
         ? lotteries
         : lotteries.where((l) => l.status == 'sell').toList();
@@ -554,13 +551,12 @@ class _RewardState extends State<Reward> {
       do {
         lotto = sourceLotteries[_rnd.nextInt(sourceLotteries.length)];
         tries++;
-        if (tries > 50) break; // ป้องกัน loop ไม่รู้จบ (ป้องกันกรณีข้อมูลแปลก)
+        if (tries > 50) break;
       } while (picked.contains(lotto));
       picked.add(lotto);
       return lotto;
     }
 
-    // สุ่มรางวัลที่ 1-3 (unique)
     final l1 = pickUniqueLottery();
     final l2 = pickUniqueLottery();
     final l3 = pickUniqueLottery();
@@ -575,7 +571,6 @@ class _RewardState extends State<Reward> {
       prize3Num.substring(prize3Num.length - 2),
     };
 
-    // หา candidate ที่เป็นไปได้ (ตัดรางวัล 1–3 และตัดเลขท้ายที่ต้องห้ามออก)
     final candidate2Digits = sourceLotteries.where((lotto) {
       final numStr = lotto.number.toString().padLeft(6, '0');
       final last2 = numStr.substring(numStr.length - 2);
@@ -585,22 +580,16 @@ class _RewardState extends State<Reward> {
           lotto.lid != l3.lid;
     }).toList();
 
-    // เลขท้าย 3 ตัว: เอาจากรางวัลที่ 1 (ตามที่ต้องการ)
     final last3Digits = prize1Num.substring(prize1Num.length - 3);
 
-    // เลขท้าย 2 ตัว: สุ่มใหม่ 00-99 (ไม่เกี่ยวกับรางวัลที่ 1)
-    // เลขท้าย 2 ตัว
-    // เลือกจาก candidate (ถ้ามี)
     String last2Digits;
     if (candidate2Digits.isNotEmpty) {
       final picked = candidate2Digits[_rnd.nextInt(candidate2Digits.length)];
       last2Digits = picked.number.toString().padLeft(6, '0').substring(4);
     } else {
-      // fallback ถ้าไม่มีจริง ๆ (ป้องกัน crash)
       last2Digits = _rnd.nextInt(100).toString().padLeft(2, '0');
     }
 
-    // หาใบที่ถูกรางวัลเลขท้าย 3 (ยกเว้น r1,r2,r3)
     final lLast3List = lotteries.where((lotto) {
       final s = lotto.number.toString().padLeft(6, '0');
       return s.endsWith(last3Digits) &&
@@ -609,7 +598,6 @@ class _RewardState extends State<Reward> {
           lotto.lid != l3.lid;
     }).toList();
 
-    // หาใบที่ถูกรางวัลเลขท้าย 2 (ยกเว้น r1,r2,r3)
     final lLast2List = lotteries.where((lotto) {
       final s = lotto.number.toString().padLeft(6, '0');
       return s.endsWith(last2Digits) &&
@@ -618,7 +606,6 @@ class _RewardState extends State<Reward> {
           lotto.lid != l3.lid;
     }).toList();
 
-    // อัพเดตในฐานข้อมูล (await เพื่อให้แน่ใจว่า update เสร็จ)
     try {
       await updateLottoReward(1, l1.lid);
       await updateLottoReward(2, l2.lid);
@@ -638,7 +625,6 @@ class _RewardState extends State<Reward> {
       return;
     }
 
-    // เก็บ state เพื่อแสดงผลบน UI
     setState(() {
       prize1 = prize1Num;
       prize2 = prize2Num;
@@ -647,7 +633,6 @@ class _RewardState extends State<Reward> {
       last2 = last2Digits;
     });
 
-    // debug log
     print('รางวัลที่1: $prize1Num, last3: $last3Digits');
     print(
       'เลขท้าย2 (สุ่ม): $last2Digits, ผู้ถูกรางวัล2ตัว: ${lLast2List.map((e) => e.number)}',

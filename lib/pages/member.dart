@@ -324,13 +324,13 @@ class _MemberPageState extends State<MemberPage> {
                               TextButton(
                                 child: Text("ยกเลิก"),
                                 onPressed: () {
-                                  Navigator.of(context).pop(); // ปิด dialog
+                                  Navigator.of(context).pop();
                                 },
                               ),
                               TextButton(
                                 child: Text("ยืนยัน"),
                                 onPressed: () {
-                                  Navigator.of(context).pop(); // ปิด dialog
+                                  Navigator.of(context).pop();
                                   Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
@@ -449,7 +449,7 @@ class _MemberPageState extends State<MemberPage> {
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white70,
+        unselectedItemColor: Colors.white,
         backgroundColor: const Color(0xFF9E090F),
         showUnselectedLabels: true,
         onTap: (index) {

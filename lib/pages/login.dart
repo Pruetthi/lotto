@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:lotto/config/internal_config.dart';
 import 'package:lotto/model/request/UserResponse.dart';
 import 'package:lotto/pages/home.dart';
+import 'package:lotto/pages/mainpage.dart';
 import 'package:lotto/pages/reg.dart';
 import 'package:http/http.dart' as http;
 
