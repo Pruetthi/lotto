@@ -285,61 +285,36 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> register(BuildContext context) async {
-    final email = emailController.text.trim();
-    final username = usernameController.text.trim();
-    final password = passwordController.text.trim();
-    final wallet = walletController.text.trim();
-    final birthday = birthdayController.text.trim();
-
+    // ส่ง request แบบไม่รอผล
     try {
       var request = http.MultipartRequest(
         "POST",
         Uri.parse("$API_ENDPOINT/register"),
       );
 
-      // ใส่ fields
-      request.fields['email'] = email;
-      request.fields['user_name'] = username;
-      request.fields['password'] = password;
-      request.fields['wallet'] = wallet;
-      request.fields['birthday'] = birthday;
+      request.fields['email'] = emailController.text.trim();
+      request.fields['user_name'] = usernameController.text.trim();
+      request.fields['password'] = passwordController.text.trim();
+      request.fields['wallet'] = walletController.text.trim();
+      request.fields['birthday'] = birthdayController.text.trim();
 
-      // ใส่ไฟล์รูปถ้ามี
       if (_image != null) {
         request.files.add(
           await http.MultipartFile.fromPath('image', _image!.path),
         );
       }
 
-      var response = await request.send();
-      var respStr = await response.stream
-          .bytesToString(); // อ่านข้อความจาก server
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        // แสดง SnackBar ก่อน
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("✅ Success: $respStr")));
-
-        // รอให้ SnackBar แสดงประมาณ 1 วินาที แล้วค่อยไปหน้า Login
-        await Future.delayed(const Duration(seconds: 1));
-
-        if (!mounted) return; // เช็คว่า widget ยังอยู่ใน tree
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("❌ Failed: ${response.statusCode} - $respStr"),
-          ),
-        );
-      }
+      // ยิงไป แต่ไม่รอผลลัพธ์
+      request.send();
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("❌ Error: $e")));
+      // ถ้าจะ log error ไว้ก็ดี
+      debugPrint("Register error: $e");
     }
+
+    // 👉 กดปุ๊บไปหน้า Login ทันที
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+    );
   }
 
   Future<void> pickImage() async {
